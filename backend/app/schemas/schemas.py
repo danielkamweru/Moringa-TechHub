@@ -85,3 +85,27 @@ class LoginRequest(BaseModel):
         if not self.username and not self.email:
             raise ValueError("Either username or email must be provided")
         return self
+    
+
+
+# =========================
+# Category schemas
+# =========================
+
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    color: Optional[str] = "#3B82F6"
+
+
+class CategoryCreate(CategoryBase):
+    pass
+
+
+class CategoryResponse(CategoryBase):
+    id: int
+    created_at: datetime
+    created_by: Optional[int]
+
+    model_config = ConfigDict(from_attributes=True)
+
