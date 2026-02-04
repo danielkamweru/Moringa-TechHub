@@ -201,3 +201,25 @@ class LikeResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+# =========================
+# Notification schemas
+# =========================
+
+class NotificationResponse(BaseModel):
+    id: int
+    title: str
+    message: str
+    is_read: bool
+    created_at: datetime
+    notification_type: Optional[str] = None
+    related_content_id: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+        
+    @field_validator('notification_type', mode='before')
+    @classmethod
+    def convert_enum_to_string(cls, v):
+        if hasattr(v, 'value'):
+            return v.value
+        return str(v) if v else None
