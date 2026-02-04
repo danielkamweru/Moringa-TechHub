@@ -119,3 +119,40 @@ def delete_category(
     db.commit()
     
     return {"message": "Category deleted successfully"}
+
+@router.post("/{category_id}/subscribe")
+def subscribe_to_category(
+    category_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    
+    if category not in current_user.subscribed_categories:
+        current_user.subscribed_categories.append(category)
+        db.commit()
+        
+        # Notify category creator about new subscriber (if creator exists and is not the subscriber)
+        if category.created_by and category.created_by != current_user.id:
+            print(f"Creating subscription notification for user {category.created_by} by user {current_user.id}")
+            notification = Notification(
+                user_id=category.created_by,
+                notification_type=NotificationTypeEnum.FOLLOW,
+                title="New Category Subscriber",
+                message=f"{current_user.full_name or current_user.username} subscribed to your category '{category.name}'",
+                related_content_id=category.id
+            )
+            db.add(notification)
+            db.commit()
+            print(f"Subscription notification created successfully")
+        else:
+            print(f"Subscription notification not created. category.created_by: {category.created_by}, current_user.id: {current_user.id}")
+        
+        return {"message": "Subscribed to category successfully"}
+    
+    return {"message": "Already subscribed to this category"}
