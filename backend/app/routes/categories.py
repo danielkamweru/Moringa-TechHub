@@ -156,3 +156,30 @@ def subscribe_to_category(
         return {"message": "Subscribed to category successfully"}
     
     return {"message": "Already subscribed to this category"}
+
+@router.delete("/{category_id}/subscribe")
+def unsubscribe_from_category(
+    category_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    
+    if category in current_user.subscribed_categories:
+        current_user.subscribed_categories.remove(category)
+        db.commit()
+        return {"message": "Unsubscribed from category successfully"}
+    
+    return {"message": "Not subscribed to this category"}
+
+@router.get("/user/subscriptions", response_model=List[CategoryResponse])
+def get_user_subscriptions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return current_user.subscribed_categories
