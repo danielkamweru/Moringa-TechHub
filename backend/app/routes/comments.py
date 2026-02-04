@@ -139,3 +139,50 @@ def create_comment(
     db_comment = db.query(Comment).options(joinedload(Comment.author)).filter(Comment.id == db_comment.id).first()
     
     return db_comment
+
+@router.get("/{comment_id}", response_model=CommentResponse)
+def get_comment(
+    comment_id: int,
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy.orm import joinedload
+    comment = db.query(Comment).options(joinedload(Comment.author)).filter(Comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    return comment
+
+@router.put("/{comment_id}", response_model=CommentResponse)
+def update_comment(
+    comment_id: int,
+    text: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    
+    # Only author or admin can update
+    if comment.author_id != current_user.id and current_user.role != RoleEnum.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this comment"
+        )
+    
+    comment.text = text
+    db.commit()
+    db.refresh(comment)
+    
+    # Reload with relationships
+    from sqlalchemy.orm import joinedload
+    comment = db.query(Comment).options(
+        joinedload(Comment.author)
+    ).filter(Comment.id == comment_id).first()
+    
+    return comment
