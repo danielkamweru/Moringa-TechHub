@@ -15,3 +15,13 @@ from app.database.models import (
     ContentStatusEnum,
     ContentTypeEnum,
 )
+# =========================
+# User schemas
+# =========================
+
+class UserBase(BaseModel):
+    email: EmailStr
+    username: str
+    full_name: str
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
