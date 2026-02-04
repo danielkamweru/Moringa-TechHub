@@ -109,3 +109,49 @@ class CategoryResponse(CategoryBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+# =========================
+# Content schemas
+# =========================
+
+class ContentBase(BaseModel):
+    title: str
+    content_text: Optional[str] = None
+    content_type: ContentTypeEnum = ContentTypeEnum.ARTICLE
+    media_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    tags: Optional[str] = None
+    subtitle: Optional[str] = None
+
+
+class ContentCreate(ContentBase):
+    category_id: int
+
+
+class ContentUpdate(BaseModel):
+    title: Optional[str] = None
+    content_text: Optional[str] = None
+    media_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    tags: Optional[str] = None
+    category_id: Optional[int] = None
+    subtitle: Optional[str] = None
+
+
+class ContentResponse(ContentBase):
+    id: int
+    status: ContentStatusEnum
+    views_count: int
+    created_at: datetime
+    updated_at: Optional[datetime]
+    published_at: Optional[datetime]
+    author_id: int
+    category_id: int
+    author: UserResponse
+    category: CategoryResponse
+    likes_count: int = 0
+    dislikes_count: int = 0
+    comments_count: int = 0
+    is_flagged: bool = False
+
+    model_config = ConfigDict(from_attributes=True)
+
