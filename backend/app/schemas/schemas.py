@@ -182,3 +182,22 @@ class CommentResponse(CommentBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+# =========================
+# Like schemas
+# =========================
+
+class LikeCreate(BaseModel):
+    content_id: int
+    is_like: bool
+
+
+class LikeResponse(BaseModel):
+    id: int
+    is_like: bool
+    created_at: datetime
+    user_id: int
+    content_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
