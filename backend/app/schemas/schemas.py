@@ -51,3 +51,37 @@ class UserResponse(UserBase):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+
+
+# =========================
+# Auth schemas
+# =========================
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def password_max_72_bytes(cls, v: str):
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes")
+        return v
+
+    @model_validator(mode="after")
+    def require_username_or_email(self):
+        if not self.username and not self.email:
+            raise ValueError("Either username or email must be provided")
+        return self
