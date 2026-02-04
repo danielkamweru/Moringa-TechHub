@@ -186,3 +186,43 @@ def update_comment(
     ).filter(Comment.id == comment_id).first()
     
     return comment
+
+@router.delete("/{comment_id}")
+def delete_comment(
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    
+    # Only author or admin can delete
+    if comment.author_id != current_user.id and current_user.role != RoleEnum.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this comment"
+        )
+    
+    db.delete(comment)
+    db.commit()
+    
+    return {"message": "Comment deleted successfully"}
+
+@router.get("/{comment_id}/replies")
+def get_comment_replies(
+    comment_id: int,
+    db: Session = Depends(get_db)
+):
+    parent_comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not parent_comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    
+    replies = db.query(Comment).filter(Comment.parent_id == comment_id).all()
+    return replies
