@@ -49,3 +49,93 @@ def build_comment_tree(comments: List[Comment], db: Session, current_user: User 
                 comment_dict[comment.parent_id]["replies"].append(comment_dict[comment.id])
     
     return root_comments
+
+@router.get("/content/{content_id}")
+def get_content_comments(
+    content_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from sqlalchemy.orm import joinedload
+    content = db.query(Content).filter(Content.id == content_id).first()
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content not found"
+        )
+    
+    comments = db.query(Comment).options(joinedload(Comment.author)).filter(Comment.content_id == content_id).all()
+    return build_comment_tree(comments, db, current_user)
+
+@router.post("/", response_model=CommentResponse)
+def create_comment(
+    comment: CommentCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Verify content exists
+    content = db.query(Content).filter(Content.id == comment.content_id).first()
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content not found"
+        )
+    
+    # If replying to a comment, verify parent exists
+    if comment.parent_id:
+        parent_comment = db.query(Comment).filter(Comment.id == comment.parent_id).first()
+        if not parent_comment:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Parent comment not found"
+            )
+        
+        # Ensure parent comment belongs to the same content
+        if parent_comment.content_id != comment.content_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Parent comment does not belong to this content"
+            )
+    
+    db_comment = Comment(
+        text=comment.text,
+        author_id=current_user.id,
+        content_id=comment.content_id,
+        parent_id=comment.parent_id
+    )
+    
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    
+    # Create notification for content author (if not commenting on own content)
+    if content.author_id != current_user.id:
+        from app.database.models import Notification, NotificationTypeEnum
+        notification = Notification(
+            user_id=content.author_id,
+            notification_type=NotificationTypeEnum.COMMENT,
+            title="New comment on your content",
+            message=f"{current_user.full_name or current_user.username} commented on \"{content.title}\"",
+            related_content_id=content.id
+        )
+        db.add(notification)
+    
+    # If replying to a comment, notify the parent comment author
+    if comment.parent_id and parent_comment.author_id != current_user.id and parent_comment.author_id != content.author_id:
+        from app.database.models import Notification, NotificationTypeEnum
+        notification = Notification(
+            user_id=parent_comment.author_id,
+            notification_type=NotificationTypeEnum.COMMENT,
+            title="Reply to your comment",
+            message=f"{current_user.full_name or current_user.username} replied to your comment",
+            related_content_id=content.id
+        )
+        db.add(notification)
+    
+    db.commit()
+    
+    # Reload with relationships
+    from sqlalchemy.orm import joinedload
+    db_comment = db.query(Comment).options(joinedload(Comment.author)).filter(Comment.id == db_comment.id).first()
+    
+    return db_comment
