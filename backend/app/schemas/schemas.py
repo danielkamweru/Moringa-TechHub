@@ -36,3 +36,18 @@ class UserCreate(UserBase):
         if len(v.encode("utf-8")) > 72:
             raise ValueError("Password must be at most 72 bytes")
         return v
+    
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+
+class UserResponse(UserBase):
+    id: int
+    role: RoleEnum
+    is_active: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
