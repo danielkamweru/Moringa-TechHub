@@ -155,3 +155,30 @@ class ContentResponse(ContentBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+# =========================
+# Comment schemas
+# =========================
+
+class CommentBase(BaseModel):
+    text: str
+
+
+class CommentCreate(CommentBase):
+    content_id: int
+    parent_id: Optional[int] = None
+
+
+class CommentResponse(CommentBase):
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime]
+    author_id: int
+    content_id: int
+    parent_id: Optional[int]
+    author: UserResponse
+    likes_count: Optional[int] = 0
+    is_liked: Optional[bool] = False
+
+    model_config = ConfigDict(from_attributes=True)
+
