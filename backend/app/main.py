@@ -77,7 +77,7 @@ async def options_handler(path: str):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Moringa TechHub API"}
+    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.2", "deployed": "2025-02-05"}
 
 @app.get("/health")
 async def health_check():
