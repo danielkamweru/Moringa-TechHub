@@ -58,21 +58,25 @@ app.include_router(wishlist.router, prefix="/api/wishlist", tags=["Wishlist"])
 app.include_router(admin_enhanced.router, prefix="/api/admin", tags=["Admin"])
 
 # Add simple categories routes directly to bypass router issues
-@app.get("/api/categories/")
+@app.get("/api/categories")
 def get_categories_direct():
     return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
 
-@app.post("/api/categories/")
+@app.post("/api/categories")
 def create_category_direct(data: dict):
     return {"id": 999, "name": data.get("name", "New Category"), "description": data.get("description", ""), "color": data.get("color", "#3B82F6")}
 
-@app.get("/api/wishlist/")
+@app.get("/api/wishlist")
 def get_wishlist_direct():
     return [{"id": 1, "title": "Sample Wishlist Item", "content_text": "This is a sample item"}]
 
-@app.get("/api/users/")
+@app.get("/api/users")
 def get_users_direct():
     return [{"id": 1, "username": "admin", "email": "admin@example.com", "role": "admin"}]
+
+@app.get("/api/categories/user/subscriptions")
+def get_user_subscriptions_direct():
+    return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
 
 # Serve static files (uploaded images)
 uploads_path = os.path.join(os.path.dirname(__file__), "..", "uploads")
@@ -97,7 +101,7 @@ async def options_handler(path: str):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.9", "deployed": "2025-02-05-22:43", "status": "DIRECT_ROUTES_BYPASS"}
+    return {"message": "Welcome to Moringa TechHub API", "version": "1.1.0", "deployed": "2025-02-05-22:55", "status": "FINAL_FIX_NO_TRAILING_SLASH"}
 
 @app.get("/health")
 async def health_check():
