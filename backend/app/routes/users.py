@@ -132,4 +132,20 @@ def create_user(
 
 class UserRoleUpdate(BaseModel):
     role: RoleEnum
-    
+
+@router.put("/{user_id}/role", response_model=UserResponse)
+def update_user_role(
+    user_id: int,
+    body: "UserRoleUpdate",
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user.role = body.role
+    db.commit()
+    db.refresh(user)
+    from sqlalchemy.orm import joinedload
+    user = db.query(User).options(joinedload(User.profile)).filter(User.id == user_id).first()
+    return user
