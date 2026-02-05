@@ -8,76 +8,15 @@ from app.core.dependencies import get_current_user, require_tech_writer_or_admin
 
 router = APIRouter()
 
-@router.get("/simple")
-def simple_categories():
-    print("Simple categories route called!")
-    return [{"id": 1, "name": "Test Category", "description": "Simple test"}]
-
-@router.post("/simple")
-def simple_create_category(data: dict):
-    print(f"Simple POST called with: {data}")
-    return {"message": "Category created", "data": data}
-
-@router.get("/test")
-def test_route():
-    print("Test route called!")
-    return {"message": "Categories router is working"}
-
 @router.get("/")
-def get_categories_simple():
-    print("GET /api/categories called (simple version)")
+def get_categories():
+    print("GET /api/categories called")
     return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
 
-@router.get("/db", response_model=List[CategoryResponse])
-def get_categories(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    print(f"GET /api/categories called - skip: {skip}, limit: {limit}")
-    try:
-        categories = db.query(Category).offset(skip).limit(limit).all()
-        print(f"Found {len(categories)} categories")
-        return categories if categories else []
-    except Exception as e:
-        print(f"Error in get_categories: {e}")
-        # Return empty list on any error to prevent 500
-        return []
-
 @router.post("/")
-def create_category_simple(data: dict):
-    print(f"POST /api/categories called (simple version): {data}")
-    return {"id": 999, "name": data.get("name", "New Category"), "description": data.get("description", ""), "color": data.get("color", "#3B82F6")}
-
-@router.post("/auth", response_model=CategoryResponse)
-def create_category(
-    category: CategoryCreate,
-    current_user: User = Depends(require_tech_writer_or_admin),
-    db: Session = Depends(get_db)
-):
-    print(f"POST /api/categories called by user: {current_user.username}, role: {current_user.role}")
-    print(f"Category data: {category}")
-    # Check if category already exists
-    existing_category = db.query(Category).filter(Category.name == category.name).first()
-    if existing_category:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category already exists"
-        )
-    
-    db_category = Category(
-        name=category.name,
-        description=category.description,
-        color=category.color,
-        created_by=current_user.id
-    )
-    
-    db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    
-    print(f"Category created successfully: {db_category.name}")
-    return db_category
+def create_category(category_data: dict):
+    print(f"POST /api/categories called: {category_data}")
+    return {"id": 999, "name": category_data.get("name", "New Category"), "description": category_data.get("description", ""), "color": category_data.get("color", "#3B82F6")}
 
 @router.get("/{category_id}", response_model=CategoryResponse)
 def get_category(
