@@ -70,9 +70,17 @@ if os.path.exists(uploads_path):
 async def options_handler(path: str):
     return {"message": "OK"}
 
+@app.middleware("http")
+async def add_no_cache_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.4", "deployed": "2025-02-05-21:55", "status": "FIXED_CORS_ISSUE"}
+    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.5", "deployed": "2025-02-05-22:02", "status": "FIXED_CACHE_ISSUE"}
 
 @app.get("/health")
 async def health_check():
