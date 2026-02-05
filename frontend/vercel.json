@@ -16,7 +16,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "@api_url"
-  },
+    "VITE_API_URL": "https://techhub-2-kwl3.onrender.com"
   }
 }

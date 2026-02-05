@@ -16,7 +16,14 @@ app = FastAPI(title="Moringa TechHub API", version="1.0.0")
 # Configure CORS middleware - MUST be added right after app creation
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5175", "http://localhost:5174", "http://localhost:5176", "http://localhost:3000", "http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5175", 
+        "http://localhost:5174", 
+        "http://localhost:5176", 
+        "http://localhost:3000", 
+        "http://localhost:5173",
+        "https://your-vercel-app-name.vercel.app"  # Replace with your actual Vercel URL
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
