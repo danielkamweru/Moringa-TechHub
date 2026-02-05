@@ -161,7 +161,7 @@ const Profile = () => {
                           // Ensure fallback URL has full domain
                           const fallbackUrl = user.profile.avatar_url.startsWith('http') 
                             ? user.profile.avatar_url 
-                            : `http://localhost:8000${user.profile.avatar_url}`;
+                            : `https://techhub-2-kwl3.onrender.com${user.profile.avatar_url}`;
                           e.target.src = fallbackUrl;
                         } else {
                           e.target.style.display = 'none';
@@ -173,7 +173,7 @@ const Profile = () => {
                       key={`fallback-${avatarKey}`} // Force re-render when avatarKey changes
                       src={user.profile.avatar_url.startsWith('http') 
                         ? user.profile.avatar_url 
-                        : `http://localhost:8000${user.profile.avatar_url}`} 
+                        : `https://techhub-2-kwl3.onrender.com${user.profile.avatar_url}`} 
                       alt="Avatar" 
                       className="w-full h-full rounded-full object-cover" 
                       onLoad={() => console.log('Fallback avatar loaded:', user.profile.avatar_url)}
@@ -325,7 +325,7 @@ const Profile = () => {
                             // Ensure fallback URL has full domain
                             const fallbackUrl = user.profile.avatar_url.startsWith('http') 
                               ? user.profile.avatar_url 
-                              : `http://localhost:8000${user.profile.avatar_url}`;
+                              : `https://techhub-2-kwl3.onrender.com${user.profile.avatar_url}`;
                             e.target.src = fallbackUrl;
                           } else {
                             e.target.style.display = 'none';
@@ -337,7 +337,7 @@ const Profile = () => {
                         key={`preview-fallback-${avatarKey}`} // Force re-render when avatarKey changes
                         src={user.profile.avatar_url.startsWith('http') 
                           ? user.profile.avatar_url 
-                          : `http://localhost:8000${user.profile.avatar_url}`} 
+                          : `https://techhub-2-kwl3.onrender.com${user.profile.avatar_url}`} 
                         alt="Avatar preview" 
                         className="w-full h-full rounded-full object-cover" 
                         onLoad={() => console.log('Preview fallback loaded:', user.profile.avatar_url)}
