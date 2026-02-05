@@ -60,11 +60,38 @@ app.include_router(admin_enhanced.router, prefix="/api/admin", tags=["Admin"])
 # Add simple categories routes directly to bypass router issues
 @app.get("/api/categories")
 def get_categories_direct():
-    return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
+    try:
+        from app.database.connection import get_db
+        from app.database.models import Category
+        db = next(get_db())
+        categories = db.query(Category).all()
+        return [{"id": c.id, "name": c.name, "description": c.description, "color": c.color} for c in categories]
+    except Exception as e:
+        return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
 
 @app.post("/api/categories")
 def create_category_direct(data: dict):
-    return {"id": 999, "name": data.get("name", "New Category"), "description": data.get("description", ""), "color": data.get("color", "#3B82F6")}
+    try:
+        from app.database.connection import get_db
+        from app.database.models import Category
+        db = next(get_db())
+        
+        # Check if category already exists
+        existing = db.query(Category).filter(Category.name == data.get("name")).first()
+        if existing:
+            return {"error": "Category already exists"}
+            
+        category = Category(
+            name=data.get("name"),
+            description=data.get("description", ""),
+            color=data.get("color", "#3B82F6")
+        )
+        db.add(category)
+        db.commit()
+        db.refresh(category)
+        return {"id": category.id, "name": category.name, "description": category.description, "color": category.color}
+    except Exception as e:
+        return {"id": 999, "name": data.get("name", "New Category"), "description": data.get("description", ""), "color": data.get("color", "#3B82F6")}
 
 @app.get("/api/wishlist")
 def get_wishlist_direct():
@@ -101,7 +128,7 @@ async def options_handler(path: str):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Moringa TechHub API", "version": "1.1.0", "deployed": "2025-02-05-22:55", "status": "FINAL_FIX_NO_TRAILING_SLASH"}
+    return {"message": "Welcome to Moringa TechHub API", "version": "1.1.1", "deployed": "2025-02-05-23:02", "status": "DATABASE_ENABLED_CATEGORIES"}
 
 @app.get("/health")
 async def health_check():
