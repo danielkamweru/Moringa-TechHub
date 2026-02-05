@@ -62,3 +62,28 @@ def add_to_wishlist(
     except Exception as e:
         print(f"Error adding to wishlist: {e}")
         raise HTTPException(status_code=500, detail="Failed to add to wishlist")
+    
+@router.delete("/{content_id}")
+def remove_from_wishlist(
+    content_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        # Remove from wishlist
+        stmt = user_wishlist.delete().where(
+            user_wishlist.c.user_id == current_user.id,
+            user_wishlist.c.content_id == content_id
+        )
+        result = db.execute(stmt)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=400, detail="Content not in wishlist")
+        
+        return {"message": "Content removed from wishlist successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error removing from wishlist: {e}")
+        raise HTTPException(status_code=500, detail="Failed to remove from wishlist")
