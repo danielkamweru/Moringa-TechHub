@@ -22,7 +22,8 @@ app.add_middleware(
         "http://localhost:5176", 
         "http://localhost:3000", 
         "http://localhost:5173",
-        "https://moringa-tech-hub-kappa.vercel.app"
+        "https://moringa-tech-hub-kappa.vercel.app",
+        "*"  # Allow all origins for development
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],

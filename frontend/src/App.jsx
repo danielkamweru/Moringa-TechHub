@@ -23,15 +23,20 @@ function App() {
     }
   }, [dispatch])
 
-  // Fetch user's likes, wishlist, notification count, and category subscriptions when authenticated
+  // Load user data only if authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      dispatch(fetchUserLikes())
-      dispatch(fetchWishlist())
-      dispatch(fetchUnreadCount())
-      dispatch(fetchUserSubscriptions())
+      // Parallel loading for better performance
+      Promise.all([
+        dispatch(fetchUserLikes()),
+        dispatch(fetchWishlist()),
+        dispatch(fetchUnreadCount()),
+        dispatch(fetchUserSubscriptions())
+      ]).catch(error => {
+        console.error('Failed to load user data:', error)
+      })
     }
-  }, [isAuthenticated, dispatch])
+  }, [dispatch, isAuthenticated])
 
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
