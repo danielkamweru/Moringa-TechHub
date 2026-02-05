@@ -82,3 +82,54 @@ def update_user(
     from sqlalchemy.orm import joinedload
     user = db.query(User).options(joinedload(User.profile)).filter(User.id == user_id).first()
     return user
+
+@router.post("/", response_model=UserResponse)
+def create_user(
+    user: UserCreate,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    # Check if user already exists
+    db_user = db.query(User).filter(
+        (User.email == user.email) | (User.username == user.username)
+    ).first()
+    
+    if db_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email or username already registered"
+        )
+    
+    # Create new user
+    hashed_password = get_password_hash(user.password)
+    db_user = User(
+        email=user.email,
+        username=user.username,
+        full_name=user.full_name,
+        hashed_password=hashed_password,
+        role=user.role,
+    )
+    
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    
+    # Create profile if bio or avatar_url provided
+    if user.bio or user.avatar_url:
+        profile = Profile(
+            user_id=db_user.id,
+            bio=user.bio,
+            avatar_url=user.avatar_url
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    
+    # Reload with profile
+    from sqlalchemy.orm import joinedload
+    db_user = db.query(User).options(joinedload(User.profile)).filter(User.id == db_user.id).first()
+    return db_user
+
+class UserRoleUpdate(BaseModel):
+    role: RoleEnum
+    
