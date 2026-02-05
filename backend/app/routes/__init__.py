@@ -1,1 +1,1 @@
-from . import auth, users, content, comments, categories, notifications, wishlist, admin_enhanced
+from . import auth, users, content, comments, categories_simple as categories, notifications, wishlist, admin_enhanced
