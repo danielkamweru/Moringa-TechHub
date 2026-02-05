@@ -45,16 +45,16 @@ def delete_articles():
         # First check how many articles exist
         cursor.execute("SELECT COUNT(*) FROM content WHERE content_type = 'blog'")
         article_count = cursor.fetchone()[0]
-        print(f"📊 Found {article_count} articles in database")
+        print(f" Found {article_count} articles in database")
         
         if article_count == 0:
-            print("✅ No articles to delete")
+            print(" No articles to delete")
             return True
         
         # Get article details before deletion
         cursor.execute("SELECT id, title FROM content WHERE content_type = 'blog'")
         articles = cursor.fetchall()
-        print("📝 Articles to be deleted:")
+        print(" Articles to be deleted:")
         for article in articles:
             print(f"   - ID: {article[0]}, Title: {article[1]}")
         
@@ -65,7 +65,7 @@ def delete_articles():
                 SELECT id FROM content WHERE content_type = 'blog'
             )
         """)
-        print("🗑️  Deleted related notifications")
+        print("  Deleted related notifications")
         
         # Delete comments on articles
         cursor.execute("""
@@ -74,7 +74,7 @@ def delete_articles():
                 SELECT id FROM content WHERE content_type = 'blog'
             )
         """)
-        print("💬 Deleted related comments")
+        print(" Deleted related comments")
         
         # Delete likes on articles
         cursor.execute("""
@@ -83,7 +83,7 @@ def delete_articles():
                 SELECT id FROM content WHERE content_type = 'blog'
             )
         """)
-        print("👍 Deleted related likes")
+        print(" Deleted related likes")
         
         # Delete wishlist entries for articles
         cursor.execute("""
@@ -92,18 +92,18 @@ def delete_articles():
                 SELECT id FROM content WHERE content_type = 'blog'
             )
         """)
-        print("⭐ Deleted related wishlist entries")
+        print(" Deleted related wishlist entries")
         
         # Finally delete the articles
         cursor.execute("DELETE FROM content WHERE content_type = 'blog'")
         deleted_count = cursor.rowcount
         conn.commit()
         
-        print(f"✅ Successfully deleted {deleted_count} articles")
+        print(f"Successfully deleted {deleted_count} articles")
         return True
         
     except Exception as e:
-        print(f"❌ Error deleting articles: {e}")
+        print(f"Error deleting articles: {e}")
         if conn:
             conn.rollback()
         return False
@@ -114,6 +114,6 @@ def delete_articles():
 if __name__ == "__main__":
     success = delete_articles()
     if success:
-        print("🎉 Article deletion completed!")
+        print(" Article deletion completed!")
     else:
-        print("💥 Article deletion failed!")
+        print(" Article deletion failed!")
