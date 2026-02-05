@@ -35,3 +35,50 @@ def get_user(
             detail="User not found"
         )
     return user
+
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Users can only update their own profile, admins can update any
+    if current_user.id != user_id and current_user.role != RoleEnum.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this user"
+        )
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Update user fields
+    update_data = user_update.dict(exclude_unset=True)
+    profile_fields = {'bio', 'avatar_url'}
+    user_fields = {k: v for k, v in update_data.items() if k not in profile_fields}
+    
+    for field, value in user_fields.items():
+        setattr(user, field, value)
+    
+    # Update or create profile for bio and avatar_url
+    profile_fields_data = {k: v for k, v in update_data.items() if k in profile_fields}
+    if profile_fields_data:
+        profile = db.query(Profile).filter(Profile.user_id == user_id).first()
+        if profile:
+            for field, value in profile_fields_data.items():
+                setattr(profile, field, value)
+        else:
+            profile = Profile(user_id=user_id, **profile_fields_data)
+            db.add(profile)
+    
+    db.commit()
+    db.refresh(user)
+    # Reload with profile
+    from sqlalchemy.orm import joinedload
+    user = db.query(User).options(joinedload(User.profile)).filter(User.id == user_id).first()
+    return user
