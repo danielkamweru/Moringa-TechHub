@@ -30,3 +30,35 @@ def get_wishlist(
         print(f"Error fetching wishlist: {e}")
         # Return empty list on error to prevent crashes
         return []
+    
+@router.post("/{content_id}")
+def add_to_wishlist(
+    content_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        content = db.query(Content).filter(Content.id == content_id).first()
+        if not content:
+            raise HTTPException(status_code=404, detail="Content not found")
+        
+        # Check if already in wishlist
+        existing = db.query(user_wishlist).filter(
+            user_wishlist.c.user_id == current_user.id,
+            user_wishlist.c.content_id == content_id
+        ).first()
+        
+        if existing:
+            raise HTTPException(status_code=400, detail="Content already in wishlist")
+        
+        # Add to wishlist
+        stmt = user_wishlist.insert().values(user_id=current_user.id, content_id=content_id)
+        db.execute(stmt)
+        db.commit()
+        
+        return {"message": "Content added to wishlist successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error adding to wishlist: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add to wishlist")
