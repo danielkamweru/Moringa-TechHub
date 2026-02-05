@@ -8,7 +8,7 @@ import logging
 import os
 
 # Import seed function
-from backend.seed_final import seed_database
+from seed_final import seed_database
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
