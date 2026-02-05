@@ -7,6 +7,9 @@ from app.routes import auth, users, content, comments, categories, notifications
 import logging
 import os
 
+# Import seed function
+from backend.seed_final import seed_database
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -26,14 +29,25 @@ app.add_middleware(
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
-    allow_headers=["*"],
-    expose_headers=["*"]
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
+    expose_headers=["*"],
+    max_age=600
 )
 
 # Create database tables with error handling
 try:
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created successfully")
+    
+    # Seed database if requested
+    if os.getenv("SEED_ON_START", "false").lower() == "true":
+        logger.info("Seeding database on startup...")
+        try:
+            seed_database()
+            logger.info("Database seeded successfully")
+        except Exception as e:
+            logger.error(f"Database seeding failed: {e}")
+            
 except Exception as e:
     logger.error(f"Database connection failed: {e}")
     logger.info("The API will start but database operations will fail until database is properly configured")
@@ -56,6 +70,10 @@ if os.path.exists(uploads_path):
     avatars_path = os.path.join(uploads_path, "avatars")
     if os.path.exists(avatars_path):
         app.mount("/avatars", StaticFiles(directory=avatars_path), name="avatars")
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    return {"message": "OK"}
 
 @app.get("/")
 async def root():

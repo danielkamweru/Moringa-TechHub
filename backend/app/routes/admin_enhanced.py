@@ -290,6 +290,62 @@ def delete_category(
 # Content Flagging (Admin)
 # =========================
 
+@router.post("/content/{content_id}/flag")
+def flag_content(
+    content_id: int,
+    reason: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Flag content for review"""
+    content = db.query(Content).filter(Content.id == content_id).first()
+    if not content:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    # Check if already flagged by this user
+    existing_flag = db.query(ContentFlag).filter(
+        ContentFlag.content_id == content_id,
+        ContentFlag.flagged_by == current_user.id,
+        ContentFlag.is_resolved == False
+    ).first()
+    
+    if existing_flag:
+        raise HTTPException(status_code=400, detail="Content already flagged by this user")
+    
+    # Create flag
+    flag = ContentFlag(
+        content_id=content_id,
+        flagged_by=current_user.id,
+        reason=reason,
+        is_resolved=False
+    )
+    
+    db.add(flag)
+    db.commit()
+    
+    return {"message": "Content flagged successfully"}
+
+@router.delete("/content/{content_id}/unflag")
+def unflag_content(
+    content_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Remove flag from content"""
+    flag = db.query(ContentFlag).filter(
+        ContentFlag.content_id == content_id,
+        ContentFlag.flagged_by == current_user.id,
+        ContentFlag.is_resolved == False
+    ).first()
+    
+    if not flag:
+        raise HTTPException(status_code=404, detail="Flag not found")
+    
+    db.delete(flag)
+    db.commit()
+    
+    return {"message": "Flag removed successfully"}
+
 @router.get("/flags/pending")
 def get_pending_flags(
     skip: int = Query(0, ge=0),
@@ -332,6 +388,23 @@ def resolve_flag(
 # =========================
 # Dashboard Stats (Admin)
 # =========================
+
+# =========================
+# Database Seeding (Admin)
+# =========================
+
+@router.post("/seed")
+def seed_database_endpoint(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Seed database with initial content"""
+    try:
+        from backend.seed_final import seed_database
+        seed_database()
+        return {"message": "Database seeded successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Seeding failed: {str(e)}")
 
 @router.get("/stats")
 def get_admin_stats(

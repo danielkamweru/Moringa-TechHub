@@ -7,3 +7,5 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: SEED_ON_START
+        value: "true"
