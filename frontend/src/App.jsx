@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
-import MobileNavigation from './components/MobileNavigation'
 import Footer from './components/Footer'
 import AppRoutes from './routes/AppRoutes'
 import { checkAuth } from './features/auth/authSlice'
@@ -42,9 +41,9 @@ function App() {
           <Navbar />
         </div>
         
-        {/* Mobile Navigation */}
-        <div className="lg:block">
-          <MobileNavigation />
+        {/* Mobile Navigation - Navbar handles both desktop and mobile */}
+        <div className="lg:hidden">
+          <Navbar />
         </div>
         
         {/* Main Content */}
