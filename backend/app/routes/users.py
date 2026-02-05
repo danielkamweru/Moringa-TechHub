@@ -167,3 +167,21 @@ def deactivate_user(
     db.commit()
     
     return {"message": "User deactivated successfully"}
+
+@router.put("/{user_id}/activate")
+def activate_user(
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    user.is_active = True
+    db.commit()
+    
+    return {"message": "User activated successfully"}
