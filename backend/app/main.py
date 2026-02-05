@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database.connection import engine
 from app.database.models import Base
-from app.routes import auth, users, content, comments, categories, notifications, wishlist, admin_enhanced
+from app.routes import auth, users, content, comments, categories_simple as categories, notifications, wishlist, admin_enhanced
 import logging
 import os
 
@@ -80,7 +80,7 @@ async def options_handler(path: str):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.6", "deployed": "2025-02-05-22:08", "status": "REMOVED_CACHE_MIDDLEWARE"}
+    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.7", "deployed": "2025-02-05-22:18", "status": "SIMPLE_CATEGORIES_ROUTER"}
 
 @app.get("/health")
 async def health_check():
