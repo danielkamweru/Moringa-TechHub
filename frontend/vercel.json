@@ -29,6 +29,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://techhub-2-kwl3.onrender.com"
+    "VITE_API_URL": "https://moringa-techhub.onrender.com"
   }
 }

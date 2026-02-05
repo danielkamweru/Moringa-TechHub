@@ -93,7 +93,7 @@ const authSlice = createSlice({
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
             ? action.payload.user.profile.avatar_url
-            : `https://techhub-2-kwl3.onrender.com${action.payload.user.profile.avatar_url}`
+            : `https://moringa-techhub.onrender.com${action.payload.user.profile.avatar_url}`
         }
       })
       .addCase(login.rejected, (state, action) => {
@@ -113,7 +113,7 @@ const authSlice = createSlice({
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
             ? action.payload.user.profile.avatar_url
-            : `https://techhub-2-kwl3.onrender.com${action.payload.user.profile.avatar_url}`
+            : `https://moringa-techhub.onrender.com${action.payload.user.profile.avatar_url}`
         }
       })
       .addCase(register.rejected, (state, action) => {
@@ -133,7 +133,7 @@ const authSlice = createSlice({
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
             ? action.payload.user.profile.avatar_url
-            : `https://techhub-2-kwl3.onrender.com${action.payload.user.profile.avatar_url}`
+            : `https://moringa-techhub.onrender.com${action.payload.user.profile.avatar_url}`
         }
       })
       .addCase(checkAuth.rejected, (state) => {
@@ -148,7 +148,7 @@ const authSlice = createSlice({
         if (action.payload?.profile?.avatar_url && !action.payload.avatar_url) {
           state.user.avatar_url = action.payload.profile.avatar_url.startsWith('http')
             ? action.payload.profile.avatar_url
-            : `https://techhub-2-kwl3.onrender.com${action.payload.profile.avatar_url}`
+            : `https://moringa-techhub.onrender.com${action.payload.profile.avatar_url}`
         }
       })
   },
