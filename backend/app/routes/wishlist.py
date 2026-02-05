@@ -13,6 +13,7 @@ def get_wishlist(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    print(f"GET /api/wishlist called by user: {current_user.username}")
     try:
         # Query content with all necessary relationships
         content = db.query(Content).join(user_wishlist).filter(
@@ -22,6 +23,7 @@ def get_wishlist(
             joinedload(Content.category)
         ).all()
         
+        print(f"Found {len(content)} items in wishlist")
         if not content:
             return []
             

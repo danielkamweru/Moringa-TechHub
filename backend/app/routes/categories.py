@@ -14,10 +14,13 @@ def get_categories(
     limit: int = 100,
     db: Session = Depends(get_db)
 ):
+    print(f"GET /api/categories called - skip: {skip}, limit: {limit}")
     try:
         categories = db.query(Category).offset(skip).limit(limit).all()
+        print(f"Found {len(categories)} categories")
         return categories if categories else []
     except Exception as e:
+        print(f"Error in get_categories: {e}")
         # Return empty list on any error to prevent 500
         return []
 
