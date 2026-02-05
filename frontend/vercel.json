@@ -18,9 +18,5 @@
   "env": {
     "VITE_API_URL": "@api_url"
   },
-  "functions": {
-    "app/api/*.js": {
-      "maxDuration": 10
-    }
   }
 }
