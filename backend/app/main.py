@@ -19,9 +19,13 @@ app = FastAPI(title="Moringa TechHub API", version="1.0.0")
 # Configure CORS middleware - MUST be added right after app creation
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://moringa-tech-hub-kappa.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
 )
 
@@ -68,7 +72,7 @@ async def options_handler(path: str):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.3", "deployed": "2025-02-05-21:30", "status": "FIXED_405_ERRORS"}
+    return {"message": "Welcome to Moringa TechHub API", "version": "1.0.4", "deployed": "2025-02-05-21:55", "status": "FIXED_CORS_ISSUE"}
 
 @app.get("/health")
 async def health_check():
