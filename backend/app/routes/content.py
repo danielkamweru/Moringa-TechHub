@@ -116,13 +116,30 @@ def get_content(
         # Only filter by status if specified AND user is not admin
         if status and current_user.role != RoleEnum.ADMIN:
             query = query.filter(Content.status == status)
-        elif not current_user or current_user.role != RoleEnum.ADMIN:
-            # Non-admin users only see published content by default
+        elif current_user.role == RoleEnum.ADMIN:
+            # Admin sees all content
+            pass
+        elif current_user.role == RoleEnum.TECH_WRITER:
+            # Tech writers can see their own content (any status) + published content from others
+            query = query.filter(
+                (Content.author_id == current_user.id) | 
+                (Content.status == ContentStatusEnum.PUBLISHED)
+            )
+        else:
+            # Regular users only see published content by default
             query = query.filter(Content.status == ContentStatusEnum.PUBLISHED)
         
-        # Filter out flagged content for non-admin users
+        # Filter out flagged content for non-admin users (but allow tech writers to see their own flagged content)
         if current_user.role != RoleEnum.ADMIN:
-            query = query.filter(Content.is_flagged == False)
+            if current_user.role == RoleEnum.TECH_WRITER:
+                # Tech writers don't see flagged content from others, but can see their own
+                query = query.filter(
+                    (Content.author_id == current_user.id) | 
+                    (Content.is_flagged == False)
+                )
+            else:
+                # Regular users never see flagged content
+                query = query.filter(Content.is_flagged == False)
         # Admin sees ALL content regardless of status or flag
         
         # Sort content: approved content first, then by published_at (newest first)
@@ -135,7 +152,7 @@ def get_content(
                 desc(Content.created_at)
             )
         else:
-            # Regular users see published content, sorted by published_at (newest approved content first)
+            # Tech writers and regular users see published content, sorted by published_at (newest approved content first)
             query = query.order_by(desc(Content.published_at), desc(Content.created_at))
         
         # Get content with relationships loaded
