@@ -149,3 +149,21 @@ def update_user_role(
     from sqlalchemy.orm import joinedload
     user = db.query(User).options(joinedload(User.profile)).filter(User.id == user_id).first()
     return user
+
+@router.put("/{user_id}/deactivate")
+def deactivate_user(
+    user_id: int,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    user.is_active = False
+    db.commit()
+    
+    return {"message": "User deactivated successfully"}
