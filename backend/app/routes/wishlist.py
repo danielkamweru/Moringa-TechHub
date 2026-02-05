@@ -8,7 +8,12 @@ from app.core.dependencies import get_current_user
 
 router = APIRouter(tags=["wishlist"])
 
-@router.get("/", response_model=List[ContentResponse])
+@router.get("/")
+def get_wishlist_simple():
+    print("GET /api/wishlist called (simple version)")
+    return [{"id": 1, "title": "Sample Wishlist Item", "content_text": "This is a sample item"}]
+
+@router.get("/auth", response_model=List[ContentResponse])
 def get_wishlist(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
