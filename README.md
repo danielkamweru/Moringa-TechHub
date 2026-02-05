@@ -2,7 +2,7 @@
 
 A modern platform where students can get authentic and verified information/inspiration/advice about the tech space. Built with React, Redux Toolkit, Tailwind CSS, and FastAPI.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
@@ -17,7 +17,7 @@ A modern platform where students can get authentic and verified information/insp
 - [Contributing](#-contributing)
 - [License](#-license)
 
-## 🚀 Features
+## Features
 
 ### User Roles
 
@@ -115,7 +115,7 @@ A modern platform where students can get authentic and verified information/insp
   - Component library
   - Frontend routing
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 TechHub/
@@ -239,7 +239,7 @@ TechHub/
 └── dist/                      # Build output
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -318,7 +318,7 @@ The application will be available at:
 - Backend API: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
-## 📚 API Documentation
+## API Documentation
 
 ### Authentication Endpoints
 
@@ -349,7 +349,7 @@ The application will be available at:
 - `GET /api/users/wishlist` - Get user wishlist (authenticated)
 - `POST /api/users/wishlist/{content_id}` - Add to wishlist (authenticated)
 
-## 🔧 Environment Variables
+## Environment Variables
 
 ### Backend (.env)
 
@@ -387,7 +387,7 @@ VITE_APP_NAME=TechHub
 - Users can like multiple content items
 - Users can have multiple notifications
 
-## 🚀 Deployment
+## Deployment
 
 ### Backend Deployment (Render/Heroku)
 
@@ -413,7 +413,7 @@ npm run build
 # Upload dist/ folder to Netlify
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Backend Tests
 
@@ -437,7 +437,7 @@ npm test
 - User management
 - API endpoints
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -456,18 +456,18 @@ npm test
 - Add comments for complex logic
 - Update documentation for new features
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Contact
+## Contact
 
 For any questions or support, please contact the development team:
 
 - **Daniel Kamweru** - Group Leader & Backend Architect
 - **Project Repository**: [GitHub Link]
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Moringa School for the opportunity to build this platform
 - The open-source community for the amazing tools and libraries
