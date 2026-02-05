@@ -8,6 +8,16 @@ from app.core.dependencies import get_current_user, require_tech_writer_or_admin
 
 router = APIRouter()
 
+@router.get("/simple")
+def simple_categories():
+    print("Simple categories route called!")
+    return [{"id": 1, "name": "Test Category", "description": "Simple test"}]
+
+@router.post("/simple")
+def simple_create_category(data: dict):
+    print(f"Simple POST called with: {data}")
+    return {"message": "Category created", "data": data}
+
 @router.get("/test")
 def test_route():
     print("Test route called!")

@@ -86,9 +86,17 @@ async def health_check():
         from sqlalchemy import text
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return {"status": "healthy", "database": "connected"}
+        return {"status": "healthy", "database": "connected", "version": "1.0.1"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
+@app.get("/debug")
+async def debug_routes():
+    return {
+        "message": "Debug endpoint",
+        "routes": [route.path for route in app.routes],
+        "categories_router": "categories router should be included"
+    }
 
 if __name__ == "__main__":
     import uvicorn
