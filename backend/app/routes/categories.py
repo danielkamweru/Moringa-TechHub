@@ -8,6 +8,11 @@ from app.core.dependencies import get_current_user, require_tech_writer_or_admin
 
 router = APIRouter()
 
+@router.get("/test")
+def test_route():
+    print("Test route called!")
+    return {"message": "Categories router is working"}
+
 @router.get("/", response_model=List[CategoryResponse])
 def get_categories(
     skip: int = 0,
@@ -30,6 +35,8 @@ def create_category(
     current_user: User = Depends(require_tech_writer_or_admin),
     db: Session = Depends(get_db)
 ):
+    print(f"POST /api/categories called by user: {current_user.username}, role: {current_user.role}")
+    print(f"Category data: {category}")
     # Check if category already exists
     existing_category = db.query(Category).filter(Category.name == category.name).first()
     if existing_category:
@@ -49,6 +56,7 @@ def create_category(
     db.commit()
     db.refresh(db_category)
     
+    print(f"Category created successfully: {db_category.name}")
     return db_category
 
 @router.get("/{category_id}", response_model=CategoryResponse)
