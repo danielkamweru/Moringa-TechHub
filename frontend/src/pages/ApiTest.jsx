@@ -13,7 +13,8 @@ const ApiTest = () => {
       
       // Test 1: Basic API connectivity
       try {
-        const response = await fetch('http://localhost:8000/')
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://moringa-techhub.onrender.com'
+        const response = await fetch(`${apiUrl}/`)
         const data = await response.json()
         results.push({ test: 'Basic API', status: ' Success', data: data.message })
       } catch (error) {
@@ -22,7 +23,8 @@ const ApiTest = () => {
 
       // Test 2: Content endpoint
       try {
-        const response = await fetch('http://localhost:8000/api/content')
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://moringa-techhub.onrender.com'
+        const response = await fetch(`${apiUrl}/api/content`)
         const data = await response.json()
         results.push({ test: 'Content API', status: ' Success', data: `Found ${data.length} items` })
       } catch (error) {
@@ -31,7 +33,8 @@ const ApiTest = () => {
 
       // Test 3: Categories endpoint
       try {
-        const response = await fetch('http://localhost:8000/api/categories')
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://moringa-techhub.onrender.com'
+        const response = await fetch(`${apiUrl}/api/categories`)
         const data = await response.json()
         results.push({ test: 'Categories API', status: ' Success', data: `Found ${data.length} categories` })
       } catch (error) {
@@ -40,7 +43,8 @@ const ApiTest = () => {
 
       // Test 4: Auth endpoint (login attempt)
       try {
-        const response = await fetch('http://localhost:8000/api/auth/login', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://moringa-techhub.onrender.com'
+        const response = await fetch(`${apiUrl}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: 'test@example.com', password: 'wrongpassword' })
@@ -118,11 +122,11 @@ const ApiTest = () => {
             </div>
             <div className="flex justify-between">
               <span>Backend URL:</span>
-              <span>http://localhost:8000</span>
+              <span>{import.meta.env.VITE_API_URL || 'https://moringa-techhub.onrender.com'}</span>
             </div>
             <div className="flex justify-between">
               <span>API Base URL:</span>
-              <span>http://localhost:8000/api</span>
+              <span>{(import.meta.env.VITE_API_URL || 'https://moringa-techhub.onrender.com') + '/api'}</span>
             </div>
           </div>
         </div>
