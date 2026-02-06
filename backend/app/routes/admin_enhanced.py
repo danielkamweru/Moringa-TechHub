@@ -138,7 +138,7 @@ def activate_user(
 @router.put("/users/{user_id}/role")
 def update_user_role(
     user_id: int,
-    new_role: RoleEnum,
+    role_data: dict,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
@@ -146,6 +146,17 @@ def update_user_role(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get role from request body
+    role_str = role_data.get("role")
+    if not role_str:
+        raise HTTPException(status_code=422, detail="Role field is required")
+    
+    # Convert string to RoleEnum
+    try:
+        new_role = RoleEnum(role_str.upper())
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"Invalid role: {role_str}")
     
     user.role = new_role
     db.commit()
