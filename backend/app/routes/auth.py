@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Body, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Body, UploadFile, File, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import os
@@ -287,6 +287,7 @@ def update_profile(
 
 @router.post("/upload-avatar")
 async def upload_avatar(
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -356,6 +357,8 @@ async def upload_avatar(
     user = db.query(User).options(joinedload(User.profile)).filter(User.id == current_user.id).first()
     
     # Return full URL for frontend
-    full_avatar_url = f"http://localhost:8000{avatar_url}" if avatar_url else None
+    # Get the base URL from the request
+    base_url = f"{request.url.scheme}://{request.url.netloc}"
+    full_avatar_url = f"{base_url}{avatar_url}" if avatar_url else None
     
     return {"avatar_url": full_avatar_url, "user": user}

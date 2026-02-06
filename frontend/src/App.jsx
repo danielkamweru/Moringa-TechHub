@@ -35,8 +35,9 @@ function AppContent() {
       const adminPaths = currentPath.startsWith('/admin')
       const techWriterPaths = currentPath.startsWith('/tech-writer')
       const userPaths = currentPath.startsWith('/user')
+      const profilePaths = currentPath.startsWith('/profile')
       
-      if (!publicPaths.includes(currentPath) && !adminPaths && !techWriterPaths && !userPaths) {
+      if (!publicPaths.includes(currentPath) && !adminPaths && !techWriterPaths && !userPaths && !profilePaths) {
         // User is on a content page or other, don't redirect
         return
       }
