@@ -40,16 +40,25 @@ function AppContent() {
         return
       }
       
-      // Redirect to correct dashboard if on wrong one
-      if (user.role === 'admin' && !adminPaths) {
-        window.location.href = '/admin'
-      } else if (user.role === 'tech_writer' && !techWriterPaths) {
-        window.location.href = '/tech-writer'
-      } else if (user.role === 'user' && !userPaths && !publicPaths.includes(currentPath)) {
-        window.location.href = '/user'
+      // Don't redirect if already on correct dashboard
+      if ((user.role === 'admin' && adminPaths) ||
+          (user.role === 'tech_writer' && techWriterPaths) ||
+          (user.role === 'user' && userPaths)) {
+        return
+      }
+      
+      // Only redirect from public pages to correct dashboard
+      if (publicPaths.includes(currentPath)) {
+        if (user.role === 'admin') {
+          navigate('/admin')
+        } else if (user.role === 'tech_writer') {
+          navigate('/tech-writer')
+        } else {
+          navigate('/user')
+        }
       }
     }
-  }, [isAuthenticated, user, location])
+  }, [isAuthenticated, user, location, navigate])
 
   // Load user data only if authenticated
   useEffect(() => {
