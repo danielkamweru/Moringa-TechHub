@@ -18,41 +18,13 @@ function AppContent() {
   const navigate = useNavigate()
   const hasRedirected = useRef(false) // Track if initial redirect has happened
 
-  // Restore auth state on app load
+  // Simple auth check - no redirects
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
       dispatch(checkAuth())
     }
   }, [dispatch])
-
-  // Redirect to appropriate dashboard if authenticated and on wrong path (only on initial load)
-  useEffect(() => {
-    if (isAuthenticated && user && !hasRedirected.current) {
-      const currentPath = location.pathname
-      
-      // Only redirect from public pages to correct dashboard on initial load
-      const publicPaths = ['/login', '/register', '/']
-      // Add protected paths that should never trigger redirects
-      const protectedPaths = ['/profile', '/admin', '/tech-writer', '/user']
-      
-      // Don't redirect if on any protected path
-      if (protectedPaths.some(path => currentPath.startsWith(path))) {
-        return
-      }
-      
-      if (publicPaths.includes(currentPath)) {
-        hasRedirected.current = true // Mark as redirected
-        if (user.role === 'admin') {
-          navigate('/admin')
-        } else if (user.role === 'tech_writer') {
-          navigate('/tech-writer')
-        } else {
-          navigate('/user')
-        }
-      }
-    }
-  }, [isAuthenticated, user]) // Remove location from dependencies
 
   // Load user data only if authenticated
   useEffect(() => {
