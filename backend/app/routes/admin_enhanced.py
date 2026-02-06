@@ -26,27 +26,22 @@ def create_user(
     db: Session = Depends(get_db)
 ):
     """Create a new user (admin only)"""
-    print(f"Admin creating user with data: {user_data}")
-    
     # Check if user already exists
     existing_email = db.query(User).filter(User.email == user_data.email).first()
     existing_username = db.query(User).filter(User.username == user_data.username).first()
     
     if existing_email:
-        print(f"Email already exists: {existing_email.email}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Email '{user_data.email}' is already registered"
         )
     
     if existing_username:
-        print(f"Username already exists: {existing_username.username}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Username '{user_data.username}' is already taken"
         )
     
-    print("Creating new user...")
     new_user = User(
         email=user_data.email,
         username=user_data.username,
@@ -75,7 +70,6 @@ def create_user(
     from sqlalchemy.orm import joinedload
     new_user = db.query(User).options(joinedload(User.profile)).filter(User.id == new_user.id).first()
     
-    print(f"User created successfully: {new_user.email}")
     return new_user
 
 @router.get("/users", response_model=List[UserResponse])
@@ -88,8 +82,6 @@ def list_all_users(
     db: Session = Depends(get_db)
 ):
     """List all users with filtering (admin only)"""
-    print(f"Fetching users with params: skip={skip}, limit={limit}, role={role}, is_active={is_active}")
-    
     from sqlalchemy.orm import joinedload
     query = db.query(User).options(joinedload(User.profile))
     
@@ -99,14 +91,12 @@ def list_all_users(
             role_enum = RoleEnum(role.upper())
             query = query.filter(User.role == role_enum)
         except ValueError:
-            print(f"Invalid role parameter: {role}")
             return []
     
     if is_active is not None:
         query = query.filter(User.is_active == is_active)
     
     users = query.offset(skip).limit(limit).all()
-    print(f"Found {len(users)} users")
     return users
 
 

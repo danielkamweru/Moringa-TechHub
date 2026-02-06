@@ -21,12 +21,9 @@ export const createUser = createAsyncThunk(
   'admin/createUser',
   async (userData, { rejectWithValue }) => {
     try {
-      console.log('Creating user with data:', userData)
       const response = await api.post('/admin/users', userData)
-      console.log('User creation response:', response.data)
       return response.data
     } catch (error) {
-      console.error('User creation error:', error.response?.data)
       return rejectWithValue(error.response?.data?.detail || 'Failed to create user')
     }
   }
