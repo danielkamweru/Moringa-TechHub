@@ -9,3 +9,5 @@ services:
         sync: false
       - key: SEED_ON_START
         value: "true"
+      - key: PERSISTENT_STORAGE
+        value: "/opt/render/project/src/uploads"

@@ -106,7 +106,11 @@ def get_user_subscriptions_direct():
     return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
 
 # Serve static files (uploaded images)
-uploads_path = os.path.join(os.path.dirname(__file__), "..", "uploads")
+# Use persistent storage on Render, local storage for development
+if os.getenv("PERSISTENT_STORAGE"):
+    uploads_path = os.getenv("PERSISTENT_STORAGE")
+else:
+    uploads_path = os.path.join(os.path.dirname(__file__), "..", "uploads")
 if os.path.exists(uploads_path):
     app.mount("/uploads", StaticFiles(directory=uploads_path), name="uploads")
     # Also serve avatars directly

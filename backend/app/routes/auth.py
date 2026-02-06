@@ -302,8 +302,13 @@ async def upload_avatar(
         )
     
     # Create uploads directory if it doesn't exist
-    uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "avatars"))
-    os.makedirs(uploads_dir, exist_ok=True)
+    # Use persistent storage on Render, local storage for development
+    if os.getenv("PERSISTENT_STORAGE"):
+        uploads_dir = os.getenv("PERSISTENT_STORAGE")
+        os.makedirs(uploads_dir, exist_ok=True)
+    else:
+        uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "avatars"))
+        os.makedirs(uploads_dir, exist_ok=True)
     
     # Generate unique filename
     file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
