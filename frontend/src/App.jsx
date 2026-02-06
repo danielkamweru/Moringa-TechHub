@@ -121,4 +121,6 @@ function App() {
   )
 }
 
+console.log('App deployed at:', new Date().toISOString())
+
 export default App
