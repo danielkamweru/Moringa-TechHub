@@ -1,5 +1,5 @@
 from app.database.connection import get_db
-from app.database.models import User, Category, Content
+from app.database.models import User, Category, Content, ContentTypeEnum
 import logging
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ def seed_database():
                     subtitle=content_item.get("subtitle", ""),
                     content_text=content_item["description"],
                     category=category_objects[content_item["category"]],
-                    content_type=content_item["type"].upper(),  # Convert to uppercase for enum
+                    content_type=getattr(ContentTypeEnum, content_item["type"]),  # Use proper enum
                     media_url=content_item.get("url", ""),
                     thumbnail_url=content_item["thumbnail"]
                 )
