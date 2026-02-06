@@ -36,7 +36,10 @@ const AdminDashboard = () => {
   }, [activeTab])
 
   useEffect(() => {
-    dispatch(fetchUsers({}))
+    dispatch(fetchUsers({})).unwrap().catch((error) => {
+      console.error('Failed to fetch users:', error)
+      toast.error('Failed to load users')
+    })
     dispatch(fetchContent({ limit: 100, status: null })).then((action) => {
       console.log('Content received:', action.payload?.length || 0, 'items')
       console.log('Flagged items:', action.payload?.filter(item => item.is_flagged) || [])
@@ -49,12 +52,15 @@ const AdminDashboard = () => {
     try {
       if (isActive) {
         await dispatch(deactivateUser(userId)).unwrap()
+        toast.success('User deactivated successfully')
       } else {
         await dispatch(activateUser(userId)).unwrap()
+        toast.success('User activated successfully')
       }
       dispatch(fetchUsers({}))
     } catch (error) {
       console.error('Failed to toggle user status:', error)
+      toast.error('Failed to update user status')
     }
   }
 
@@ -62,8 +68,10 @@ const AdminDashboard = () => {
     try {
       await dispatch(updateUserRole({ userId, role: newRole })).unwrap()
       dispatch(fetchUsers({}))
+      toast.success('User role updated successfully')
     } catch (error) {
       console.error('Failed to update user role:', error)
+      toast.error('Failed to update user role')
     }
   }
 
@@ -74,8 +82,10 @@ const AdminDashboard = () => {
       setNewUser({ email: '', username: '', full_name: '', password: '', role: 'user' })
       setShowCreateUser(false)
       dispatch(fetchUsers({}))
+      toast.success('User created successfully!')
     } catch (error) {
       console.error('Failed to create user:', error)
+      toast.error(error || 'Failed to create user')
     }
   }
 
