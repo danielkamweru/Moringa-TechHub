@@ -1,3 +1,9 @@
+from app.database.connection import get_db
+from app.models import User, Category, Content
+import logging
+
+logger = logging.getLogger(__name__)
+
 SEED_CONTENT = [
     # Full-Stack Videos
     {"title": "Full Stack Web Development in 2026: Direct roadmap covering the modern stack", "category": "Full-Stack", "type": "VIDEO", "url": "https://www.youtube.com/watch?v=nu_pCVPKzTk", "description": "Complete roadmap for full-stack development in 2026", "thumbnail": "https://img.youtube.com/vi/nu_pCVPKzTk/maxresdefault.jpg"},
