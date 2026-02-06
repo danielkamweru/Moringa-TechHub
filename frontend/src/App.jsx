@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { BrowserRouter, useLocation } from 'react-router-dom'
+import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -15,6 +15,7 @@ function AppContent() {
   const dispatch = useDispatch()
   const { isAuthenticated, user } = useSelector((state) => state.auth)
   const location = useLocation()
+  const navigate = useNavigate()
 
   // Restore auth state on app load
   useEffect(() => {
