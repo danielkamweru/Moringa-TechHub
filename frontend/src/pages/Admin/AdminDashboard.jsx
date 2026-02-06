@@ -36,7 +36,9 @@ const AdminDashboard = () => {
   }, [activeTab])
 
   useEffect(() => {
-    dispatch(fetchUsers({})).unwrap().catch((error) => {
+    dispatch(fetchUsers({})).unwrap().then((users) => {
+      console.log('Users fetched successfully:', users)
+    }).catch((error) => {
       console.error('Failed to fetch users:', error)
       toast.error('Failed to load users')
     })
@@ -193,6 +195,15 @@ const AdminDashboard = () => {
   const adminUsers = users?.filter(u => u.role === 'admin').length || 0
   const writerUsers = users?.filter(u => u.role === 'tech_writer').length || 0
   const regularUsers = users?.filter(u => u.role === 'user').length || 0
+  
+  console.log('User display debug:', {
+    totalUsers,
+    activeUsers,
+    adminUsers,
+    writerUsers,
+    regularUsers,
+    usersArray: users
+  })
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
