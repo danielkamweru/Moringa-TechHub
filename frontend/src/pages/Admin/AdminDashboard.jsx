@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import toast from 'react-hot-toast'
 import { Users, FileText, Folder, Shield, Eye, EyeOff, Trash2, CheckCircle, XCircle, AlertTriangle, TrendingUp, BarChart3, Settings, Plus, Edit, Flag } from 'lucide-react'
-import { fetchUsers, createUser, deactivateUser, activateUser, updateUserRole } from '../../features/users/usersSlice'
+import { fetchUsers, createUser, deactivateUser, activateUser, updateUserRole } from '../../features/admin/adminSlice'
 import { fetchContent, approveContent, rejectContent, removeContent, flagContent, unflagContent } from '../../features/content/contentSlice'
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../../features/categories/categoriesSlice'
 
 const AdminDashboard = () => {
   const dispatch = useDispatch()
-  const { items: users } = useSelector((state) => state.users)
+  const { items: users } = useSelector((state) => state.admin)
   const { items: content } = useSelector((state) => state.content)
   const { items: categories } = useSelector((state) => state.categories)
   const [activeTab, setActiveTab] = useState(() => {
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
   }, [activeTab])
 
   useEffect(() => {
-    dispatch(fetchUsers())
+    dispatch(fetchUsers({}))
     dispatch(fetchContent({ limit: 100, status: null })).then((action) => {
       console.log('Content received:', action.payload?.length || 0, 'items')
       console.log('Flagged items:', action.payload?.filter(item => item.is_flagged) || [])
@@ -52,7 +52,7 @@ const AdminDashboard = () => {
       } else {
         await dispatch(activateUser(userId)).unwrap()
       }
-      dispatch(fetchUsers())
+      dispatch(fetchUsers({}))
     } catch (error) {
       console.error('Failed to toggle user status:', error)
     }
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
   const handleUserRoleChange = async (userId, newRole) => {
     try {
       await dispatch(updateUserRole({ userId, role: newRole })).unwrap()
-      dispatch(fetchUsers())
+      dispatch(fetchUsers({}))
     } catch (error) {
       console.error('Failed to update user role:', error)
     }
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
       await dispatch(createUser(newUser)).unwrap()
       setNewUser({ email: '', username: '', full_name: '', password: '', role: 'user' })
       setShowCreateUser(false)
-      dispatch(fetchUsers())
+      dispatch(fetchUsers({}))
     } catch (error) {
       console.error('Failed to create user:', error)
     }

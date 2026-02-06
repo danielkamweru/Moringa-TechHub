@@ -194,12 +194,11 @@ def login(request_data: dict = Body(...), db: Session = Depends(get_db)):
         if not password_valid:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         
-        # Activate user if inactive
+        # Check if user is deactivated
         if not user.is_active:
-            user.is_active = True
-            db.commit()
-            db.refresh(user)
-
+            raise HTTPException(status_code=403, detail="Your account has been deactivated. Please contact an administrator.")
+        
+        # User is active, proceed with login
         access_token = create_access_token(data={"sub": user.username})
 
         return {
