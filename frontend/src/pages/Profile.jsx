@@ -26,7 +26,12 @@ const Profile = () => {
   })
 
   useEffect(() => {
+    console.log('=== useEffect RUNNING - user changed ===', user)
     if (user) {
+      console.log('Setting up formData with user data:', {
+        avatar_url: user.avatar_url,
+        full_name: user.full_name
+      })
       setFormData({
         full_name: user.full_name || '',
         bio: user.bio || '',
@@ -96,10 +101,15 @@ const Profile = () => {
       if (response.data.user) {
         console.log('Updating Redux store with user:', response.data.user)
         console.log('User avatar_url in response:', response.data.user.avatar_url)
+        console.log('Current formData.avatar_url BEFORE update:', formData.avatar_url)
+        
         // Use the proper updateUserProfile action to update Redux state
         dispatch(updateUserProfile(response.data.user))
+        
         // Also update the local form state immediately
         setFormData(prev => ({ ...prev, avatar_url: avatarUrlWithTimestamp }))
+        
+        console.log('Current formData.avatar_url AFTER update:', formData.avatar_url)
         console.log('Redux dispatch completed')
       }
       // Show success message
