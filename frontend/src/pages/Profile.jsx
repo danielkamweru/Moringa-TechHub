@@ -93,10 +93,13 @@ const Profile = () => {
       // Update form data immediately
       setFormData(prev => ({ ...prev, avatar_url: avatarUrlWithTimestamp }))
       
-      // Update the user in Redux store using the proper action
+      // Update user in Redux store using proper action
       if (response.data.user) {
         console.log('Updating Redux store with user:', response.data.user)
-        dispatch({ type: 'auth/updateUserProfile/fulfilled', payload: response.data.user })
+        // Use the proper updateUserProfile action to update Redux state
+        dispatch(updateUserProfile(response.data.user))
+        // Also update the local form state immediately
+        setFormData(prev => ({ ...prev, avatar_url: avatarUrlWithTimestamp }))
       }
       
       // Show success message
