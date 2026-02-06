@@ -7,7 +7,7 @@ import { login, clearError } from '../features/auth/authSlice'
 const Login = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { loading, error, isAuthenticated } = useSelector((state) => state.auth)
+  const { loading, error, isAuthenticated, user } = useSelector((state) => state.auth)
   
   const [formData, setFormData] = useState({
     email: '',
@@ -16,10 +16,28 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/')
+    if (isAuthenticated && user) {
+      // Debug logging to track role issue
+      console.log('Login Redirect Debug:', {
+        email: user.email,
+        role: user.role,
+        roleType: typeof user.role,
+        redirectTo: user.role === 'admin' ? '/admin' : user.role === 'tech_writer' ? '/tech-writer' : '/user'
+      })
+      
+      // Redirect based on user role
+      if (user.role === 'admin') {
+        console.log('Redirecting to admin dashboard')
+        navigate('/admin')
+      } else if (user.role === 'tech_writer') {
+        console.log('Redirecting to tech writer dashboard')
+        navigate('/tech-writer')
+      } else {
+        console.log('Redirecting to user dashboard')
+        navigate('/user')
+      }
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, user, navigate])
 
   useEffect(() => {
     return () => dispatch(clearError())

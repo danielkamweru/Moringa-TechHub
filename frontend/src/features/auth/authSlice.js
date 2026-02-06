@@ -4,14 +4,29 @@ import { getToken, setToken, removeToken, getUserFromToken } from '../../utils/a
 
 export const login = createAsyncThunk(
   'auth/login',
-  async ({ email, password }, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/login', { email, password })
+      console.log('Login attempt with credentials:', credentials)
+      const response = await api.post('/auth/login', credentials)
+      console.log('Login response:', response.data)
       const { token, user } = response.data
       setToken(token)
       return { token, user }
     } catch (error) {
-      return rejectWithValue(error.response?.data?.detail || 'Login failed')
+      // Handle different types of errors
+      if (error.code === 'ERR_NETWORK' || error.message.includes('CORS')) {
+        return rejectWithValue('Network error: Unable to connect to the server. Please check your internet connection and try again.')
+      }
+      if (error.response?.status === 401) {
+        return rejectWithValue('Invalid email or password. Please try again.')
+      }
+      if (error.response?.status === 403) {
+        return rejectWithValue(error.response?.data?.detail || 'Account deactivated. Please contact administrator.')
+      }
+      if (error.response?.status === 429) {
+        return rejectWithValue('Too many login attempts. Please try again later.')
+      }
+      return rejectWithValue(error.response?.data?.detail || 'Login failed. Please try again.')
     }
   }
 )
@@ -25,7 +40,20 @@ export const register = createAsyncThunk(
       setToken(token)
       return { token, user }
     } catch (error) {
-      return rejectWithValue(error.response?.data?.detail || 'Registration failed')
+      // Handle different types of errors
+      if (error.code === 'ERR_NETWORK' || error.message.includes('CORS')) {
+        return rejectWithValue('Network error: Unable to connect to the server. Please check your internet connection and try again.')
+      }
+      if (error.response?.status === 400) {
+        return rejectWithValue(error.response?.data?.detail || 'Registration failed. Please check your input.')
+      }
+      if (error.response?.status === 409) {
+        return rejectWithValue('Email or username already exists. Please use different credentials.')
+      }
+      if (error.response?.status === 429) {
+        return rejectWithValue('Too many registration attempts. Please try again later.')
+      }
+      return rejectWithValue(error.response?.data?.detail || 'Registration failed. Please try again.')
     }
   }
 )
