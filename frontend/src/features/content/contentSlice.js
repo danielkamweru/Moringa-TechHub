@@ -39,7 +39,7 @@ export const createContent = createAsyncThunk(
   'content/createContent',
   async (contentData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/content', contentData)
+      const response = await api.post('/content/', contentData)
       toast.success('Content created successfully! It is now pending admin approval.')
       return response.data
     } catch (error) {
