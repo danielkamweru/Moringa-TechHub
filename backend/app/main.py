@@ -20,7 +20,7 @@ app = FastAPI(title="Moringa TechHub API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://moringa-tech-efs9msavl-daniel-kamwerus-projects.vercel.app",
+        "https://moringa-tech-gnhfsg0ks-daniel-kamwerus-projects.vercel.app",
         "http://localhost:5174",
         "http://localhost:3000"
     ],

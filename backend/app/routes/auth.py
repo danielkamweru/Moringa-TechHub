@@ -228,7 +228,18 @@ def login(request_data: dict = Body(...), db: Session = Depends(get_db)):
 def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     from sqlalchemy.orm import joinedload
     user = db.query(User).options(joinedload(User.profile)).filter(User.id == current_user.id).first()
-    return user
+    
+    # Convert to dict to ensure role is serialized as string value
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role.value,  # Ensure role is string value
+        "is_active": user.is_active,
+        "created_at": user.created_at,
+        "profile": user.profile
+    }
 
 
 @router.put("/profile", response_model=UserResponse)
