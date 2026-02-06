@@ -1,5 +1,5 @@
 from app.database.connection import get_db
-from app.models import User, Category, Content
+from app.database.models import User, Category, Content
 import logging
 
 logger = logging.getLogger(__name__)
