@@ -126,10 +126,8 @@ const Profile = () => {
       // Force re-render of avatar component
       setAvatarKey(prev => prev + 1)
       
-      // Force a re-render of the entire component
-      setTimeout(() => {
-        setFormData(prev => ({ ...prev }))
-      }, 100)
+      // Remove problematic setTimeout that was resetting formData
+      // The avatar should persist without forced re-render
       
     } catch (error) {
       console.error('Failed to upload image:', error)
