@@ -1,5 +1,5 @@
 from app.database.connection import get_db
-from app.database.models import User, Category, Content, ContentTypeEnum
+from app.database.models import User, Category, Content, ContentTypeEnum, user_wishlist
 import logging
 
 logger = logging.getLogger(__name__)
@@ -80,6 +80,8 @@ def seed_database():
         
         # Seed content
         # First, delete all existing content to start fresh
+        # Delete in correct order to avoid foreign key constraints
+        db.query(user_wishlist).delete()
         db.query(Content).delete()
         db.commit()
         
