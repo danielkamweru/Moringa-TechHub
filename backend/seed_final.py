@@ -90,11 +90,11 @@ def seed_database():
                 new_content = Content(
                     title=content_item["title"],
                     subtitle=content_item.get("subtitle", ""),
-                    description=content_item["description"],
+                    content_text=content_item["description"],
                     category=category_objects[content_item["category"]],
-                    type=content_item["type"],
-                    url=content_item.get("url", ""),
-                    thumbnail=content_item["thumbnail"]
+                    content_type=content_item["type"],
+                    media_url=content_item.get("url", ""),
+                    thumbnail_url=content_item["thumbnail"]
                 )
                 db.add(new_content)
                 db.commit()
