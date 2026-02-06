@@ -11,7 +11,7 @@ export const login = createAsyncThunk(
       setToken(token)
       return { token, user }
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Login failed')
+      return rejectWithValue(error.response?.data?.detail || 'Login failed')
     }
   }
 )
@@ -25,7 +25,7 @@ export const register = createAsyncThunk(
       setToken(token)
       return { token, user }
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Registration failed')
+      return rejectWithValue(error.response?.data?.detail || 'Registration failed')
     }
   }
 )
@@ -53,7 +53,7 @@ export const updateUserProfile = createAsyncThunk(
       const response = await api.put('/auth/profile', profileData)
       return response.data
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Profile update failed')
+      return rejectWithValue(error.response?.data?.detail || 'Profile update failed')
     }
   }
 )
