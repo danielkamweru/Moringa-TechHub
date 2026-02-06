@@ -111,6 +111,14 @@ const Profile = () => {
         
         console.log('Current formData.avatar_url AFTER update:', formData.avatar_url)
         console.log('Redux dispatch completed')
+        
+        // Test avatar accessibility immediately
+        setTimeout(() => {
+          const testImg = new Image()
+          testImg.onload = () => console.log('Avatar accessibility test: SUCCESS')
+          testImg.onerror = () => console.log('Avatar accessibility test: FAILED', avatarUrlWithTimestamp)
+          testImg.src = avatarUrlWithTimestamp
+        }, 1000)
       }
       // Show success message
       alert('Profile picture updated successfully!')
