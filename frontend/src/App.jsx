@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
@@ -16,6 +16,7 @@ function AppContent() {
   const { isAuthenticated, user } = useSelector((state) => state.auth)
   const location = useLocation()
   const navigate = useNavigate()
+  const hasRedirected = useRef(false) // Track if initial redirect has happened
 
   // Restore auth state on app load
   useEffect(() => {
@@ -25,32 +26,16 @@ function AppContent() {
     }
   }, [dispatch])
 
-  // Redirect to appropriate dashboard if authenticated and on wrong path
+  // Redirect to appropriate dashboard if authenticated and on wrong path (only on initial load)
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && !hasRedirected.current) {
       const currentPath = location.pathname
       
-      // Don't redirect if already on correct dashboard or public pages
+      // Only redirect from public pages to correct dashboard on initial load
       const publicPaths = ['/login', '/register', '/']
-      const adminPaths = currentPath.startsWith('/admin')
-      const techWriterPaths = currentPath.startsWith('/tech-writer')
-      const userPaths = currentPath.startsWith('/user')
-      const profilePaths = currentPath.startsWith('/profile')
       
-      if (!publicPaths.includes(currentPath) && !adminPaths && !techWriterPaths && !userPaths && !profilePaths) {
-        // User is on a content page or other, don't redirect
-        return
-      }
-      
-      // Don't redirect if already on correct dashboard
-      if ((user.role === 'admin' && adminPaths) ||
-          (user.role === 'tech_writer' && techWriterPaths) ||
-          (user.role === 'user' && userPaths)) {
-        return
-      }
-      
-      // Only redirect from public pages to correct dashboard
       if (publicPaths.includes(currentPath)) {
+        hasRedirected.current = true // Mark as redirected
         if (user.role === 'admin') {
           navigate('/admin')
         } else if (user.role === 'tech_writer') {
