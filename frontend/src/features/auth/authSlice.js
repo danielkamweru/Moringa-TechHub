@@ -89,6 +89,14 @@ const authSlice = createSlice({
         state.user = action.payload.user
         state.token = action.payload.token
         state.isAuthenticated = true
+        
+        // Debug logging for role
+        console.log('Login successful - User data:', {
+          email: action.payload.user?.email,
+          role: action.payload.user?.role,
+          roleType: typeof action.payload.user?.role
+        })
+        
         // Ensure avatar_url is properly set from profile if available
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
@@ -129,6 +137,14 @@ const authSlice = createSlice({
         state.token = action.payload.token
         state.isAuthenticated = true
         state.error = null
+        
+        // Debug logging for checkAuth
+        console.log('CheckAuth successful - User data:', {
+          email: action.payload.user?.email,
+          role: action.payload.user?.role,
+          roleType: typeof action.payload.user?.role
+        })
+        
         // Ensure avatar_url is properly set from profile if available
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')

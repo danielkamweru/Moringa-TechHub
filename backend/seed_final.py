@@ -102,11 +102,15 @@ def seed_database():
                     subtitle=content_item.get("subtitle", ""),
                     content_text=content_item["description"],
                     category=category_objects[content_item["category"]],
-                    content_type=getattr(ContentTypeEnum, content_item["type"]),  # Use proper enum
+                    content_type=getattr(ContentTypeEnum, content_item["type"]),
                     media_url=content_item.get("url", ""),
                     thumbnail_url=content_item["thumbnail"],
-                    author=admin_user,  # Set the admin user as author
-                    status=ContentStatusEnum.APPROVED  # Set status to approved
+                    author=admin_user,
+                    status=ContentStatusEnum.APPROVED,
+                    likes_count=0,  # Required integer field
+                    dislikes_count=0,  # Required integer field
+                    views_count=0,  # Required integer field
+                    is_flagged=False  # Required boolean field
                 )
                 db.add(new_content)
                 db.commit()
