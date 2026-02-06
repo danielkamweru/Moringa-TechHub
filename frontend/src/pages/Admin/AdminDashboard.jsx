@@ -8,7 +8,7 @@ import { fetchCategories, createCategory, updateCategory, deleteCategory } from 
 
 const AdminDashboard = () => {
   const dispatch = useDispatch()
-  const { items: users } = useSelector((state) => state.admin)
+  const { users } = useSelector((state) => state.admin)
   const { items: content } = useSelector((state) => state.content)
   const { items: categories } = useSelector((state) => state.categories)
   const [activeTab, setActiveTab] = useState(() => {
