@@ -154,9 +154,18 @@ def update_user_role(
     
     # Convert string to RoleEnum
     try:
-        new_role = RoleEnum(role_str.upper())
+        # Handle different role formats from frontend
+        role_mapping = {
+            'admin': RoleEnum.ADMIN,
+            'tech_writer': RoleEnum.TECH_WRITER,
+            'tech-writer': RoleEnum.TECH_WRITER,
+            'user': RoleEnum.USER
+        }
+        new_role = role_mapping.get(role_str.lower())
+        if not new_role:
+            raise ValueError(f"Invalid role: {role_str}")
     except ValueError:
-        raise HTTPException(status_code=422, detail=f"Invalid role: {role_str}")
+        raise HTTPException(status_code=422, detail=f"Invalid role: {role_str}. Valid roles: admin, tech_writer, user")
     
     user.role = new_role
     db.commit()
