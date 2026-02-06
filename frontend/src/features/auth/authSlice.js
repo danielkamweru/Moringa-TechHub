@@ -175,8 +175,12 @@ const authSlice = createSlice({
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
         state.user = action.payload
-        // Ensure avatar_url is properly set from profile if available
-        if (action.payload?.profile?.avatar_url && !action.payload.avatar_url) {
+        // Ensure avatar_url is properly set from response
+        if (action.payload?.avatar_url) {
+          state.user.avatar_url = action.payload.avatar_url.startsWith('http')
+            ? action.payload.avatar_url
+            : `${BASE_URL}${action.payload.avatar_url}`
+        } else if (action.payload?.profile?.avatar_url) {
           state.user.avatar_url = action.payload.profile.avatar_url.startsWith('http')
             ? action.payload.profile.avatar_url
             : `${BASE_URL}${action.payload.profile.avatar_url}`
