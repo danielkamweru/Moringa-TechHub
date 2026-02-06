@@ -33,6 +33,13 @@ function AppContent() {
       
       // Only redirect from public pages to correct dashboard on initial load
       const publicPaths = ['/login', '/register', '/']
+      // Add protected paths that should never trigger redirects
+      const protectedPaths = ['/profile', '/admin', '/tech-writer', '/user']
+      
+      // Don't redirect if on any protected path
+      if (protectedPaths.some(path => currentPath.startsWith(path))) {
+        return
+      }
       
       if (publicPaths.includes(currentPath)) {
         hasRedirected.current = true // Mark as redirected
