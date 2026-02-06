@@ -26,17 +26,21 @@ def create_user(
     db: Session = Depends(get_db)
 ):
     """Create a new user (admin only)"""
+    print(f"Admin creating user with data: {user_data}")
+    
     # Check if user already exists
     existing = db.query(User).filter(
         (User.email == user_data.email) | (User.username == user_data.username)
     ).first()
     
     if existing:
+        print(f"User already exists: {existing.email}, {existing.username}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User with this email or username already exists"
         )
     
+    print("Creating new user...")
     new_user = User(
         email=user_data.email,
         username=user_data.username,
@@ -65,6 +69,7 @@ def create_user(
     from sqlalchemy.orm import joinedload
     new_user = db.query(User).options(joinedload(User.profile)).filter(User.id == new_user.id).first()
     
+    print(f"User created successfully: {new_user.email}")
     return new_user
 
 @router.get("/users", response_model=List[UserResponse])
