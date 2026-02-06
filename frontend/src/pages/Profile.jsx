@@ -113,6 +113,16 @@ const Profile = () => {
         
         console.log('Current formData.avatar_url AFTER update:', formData.avatar_url)
         console.log('Redux dispatch completed')
+        console.log('Avatar should now persist. Testing...')
+        
+        // Test avatar persistence after 5 seconds
+        setTimeout(() => {
+          console.log('5 seconds later - checking if avatar still exists:', formData.avatar_url)
+          if (!formData.avatar_url) {
+            console.log('❌ AVATAR DISAPPEARED AFTER 5 SECONDS!')
+            console.log('Possible causes: Redux state override, useEffect race, or component unmount')
+          }
+        }, 5000)
         
         // Test avatar accessibility immediately
         setTimeout(() => {
