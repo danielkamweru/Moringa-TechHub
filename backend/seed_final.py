@@ -79,6 +79,10 @@ def seed_database():
             )
         
         # Seed content
+        # First, delete all existing content to start fresh
+        db.query(Content).delete()
+        db.commit()
+        
         for content_item in SEED_CONTENT:
             # Check if content already exists
             existing_content = db.query(Content).filter(
@@ -92,7 +96,7 @@ def seed_database():
                     subtitle=content_item.get("subtitle", ""),
                     content_text=content_item["description"],
                     category=category_objects[content_item["category"]],
-                    content_type=content_item["type"],
+                    content_type=content_item["type"].upper(),  # Convert to uppercase for enum
                     media_url=content_item.get("url", ""),
                     thumbnail_url=content_item["thumbnail"]
                 )
