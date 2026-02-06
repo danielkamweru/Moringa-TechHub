@@ -1,5 +1,5 @@
 from app.database.connection import get_db
-from app.database.models import User, Category, Content, ContentTypeEnum, user_wishlist, Comment, Like, Notification, ContentFlag
+from app.database.models import User, Category, Content, ContentTypeEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum
 import logging
 
 logger = logging.getLogger(__name__)
@@ -104,7 +104,9 @@ def seed_database():
                     category=category_objects[content_item["category"]],
                     content_type=getattr(ContentTypeEnum, content_item["type"]),  # Use proper enum
                     media_url=content_item.get("url", ""),
-                    thumbnail_url=content_item["thumbnail"]
+                    thumbnail_url=content_item["thumbnail"],
+                    author=admin_user,  # Set the admin user as author
+                    status=ContentStatusEnum.APPROVED  # Set status to approved
                 )
                 db.add(new_content)
                 db.commit()
