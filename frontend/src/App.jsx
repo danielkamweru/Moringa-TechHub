@@ -129,5 +129,6 @@ function App() {
 }
 
 console.log('App deployed at:', new Date().toISOString())
+console.log('PROFILE FIX DEPLOYED - PROTECTED PATHS ACTIVE')
 
 export default App
