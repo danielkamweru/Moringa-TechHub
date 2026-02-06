@@ -29,15 +29,21 @@ def create_user(
     print(f"Admin creating user with data: {user_data}")
     
     # Check if user already exists
-    existing = db.query(User).filter(
-        (User.email == user_data.email) | (User.username == user_data.username)
-    ).first()
+    existing_email = db.query(User).filter(User.email == user_data.email).first()
+    existing_username = db.query(User).filter(User.username == user_data.username).first()
     
-    if existing:
-        print(f"User already exists: {existing.email}, {existing.username}")
+    if existing_email:
+        print(f"Email already exists: {existing_email.email}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email or username already exists"
+            detail=f"Email '{user_data.email}' is already registered"
+        )
+    
+    if existing_username:
+        print(f"Username already exists: {existing_username.username}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Username '{user_data.username}' is already taken"
         )
     
     print("Creating new user...")
@@ -76,21 +82,32 @@ def create_user(
 def list_all_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
-    role: Optional[RoleEnum] = None,
+    role: Optional[str] = None,
     is_active: Optional[bool] = None,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """List all users with filtering (admin only)"""
+    print(f"Fetching users with params: skip={skip}, limit={limit}, role={role}, is_active={is_active}")
+    
     from sqlalchemy.orm import joinedload
     query = db.query(User).options(joinedload(User.profile))
     
+    # Convert string role to enum if provided
     if role:
-        query = query.filter(User.role == role)
+        try:
+            role_enum = RoleEnum(role.upper())
+            query = query.filter(User.role == role_enum)
+        except ValueError:
+            print(f"Invalid role parameter: {role}")
+            return []
+    
     if is_active is not None:
         query = query.filter(User.is_active == is_active)
     
-    return query.offset(skip).limit(limit).all()
+    users = query.offset(skip).limit(limit).all()
+    print(f"Found {len(users)} users")
+    return users
 
 
 @router.put("/users/{user_id}/deactivate")
