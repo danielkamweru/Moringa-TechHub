@@ -2,6 +2,9 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../services/api'
 import { getToken, setToken, removeToken, getUserFromToken } from '../../utils/authHelpers'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://moringa-techhub.onrender.com/api'
+const BASE_URL = API_BASE_URL.replace('/api', '')
+
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
@@ -121,7 +124,7 @@ const authSlice = createSlice({
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
             ? action.payload.user.profile.avatar_url
-            : `https://moringa-techhub.onrender.com${action.payload.user.profile.avatar_url}`
+            : `${BASE_URL}${action.payload.user.profile.avatar_url}`
         }
       })
       .addCase(login.rejected, (state, action) => {
@@ -141,7 +144,7 @@ const authSlice = createSlice({
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
             ? action.payload.user.profile.avatar_url
-            : `https://moringa-techhub.onrender.com${action.payload.user.profile.avatar_url}`
+            : `${BASE_URL}${action.payload.user.profile.avatar_url}`
         }
       })
       .addCase(register.rejected, (state, action) => {
@@ -161,7 +164,7 @@ const authSlice = createSlice({
         if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
           state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
             ? action.payload.user.profile.avatar_url
-            : `https://moringa-techhub.onrender.com${action.payload.user.profile.avatar_url}`
+            : `${BASE_URL}${action.payload.user.profile.avatar_url}`
         }
       })
       .addCase(checkAuth.rejected, (state) => {
@@ -176,7 +179,7 @@ const authSlice = createSlice({
         if (action.payload?.profile?.avatar_url && !action.payload.avatar_url) {
           state.user.avatar_url = action.payload.profile.avatar_url.startsWith('http')
             ? action.payload.profile.avatar_url
-            : `https://moringa-techhub.onrender.com${action.payload.profile.avatar_url}`
+            : `${BASE_URL}${action.payload.profile.avatar_url}`
         }
       })
   },
