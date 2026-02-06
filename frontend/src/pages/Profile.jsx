@@ -71,6 +71,7 @@ const Profile = () => {
     
     setUploading(true)
     try {
+      console.log('=== STARTING AVATAR UPLOAD ===')
       const formData = new FormData()
       formData.append('file', file)
       
@@ -82,6 +83,7 @@ const Profile = () => {
       })
       
       console.log('Upload response:', response.data)
+      console.log('Response structure:', JSON.stringify(response.data, null, 2))
       
       // Get the avatar URL from response
       const newAvatarUrl = response.data.avatar_url
@@ -93,13 +95,13 @@ const Profile = () => {
       // Update user in Redux store using proper action
       if (response.data.user) {
         console.log('Updating Redux store with user:', response.data.user)
+        console.log('User avatar_url in response:', response.data.user.avatar_url)
         // Use the proper updateUserProfile action to update Redux state
         dispatch(updateUserProfile(response.data.user))
+        // Also update the local form state immediately
+        setFormData(prev => ({ ...prev, avatar_url: avatarUrlWithTimestamp }))
+        console.log('Redux dispatch completed')
       }
-      
-      // Update form data immediately (only once)
-      setFormData(prev => ({ ...prev, avatar_url: avatarUrlWithTimestamp }))
-      
       // Show success message
       alert('Profile picture updated successfully!')
       
