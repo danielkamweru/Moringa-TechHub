@@ -42,7 +42,7 @@ const Profile = () => {
         dispatch(fetchUserWishlist())
       }
     }
-  }, [user, dispatch])
+  }, [user]) // Only run when user changes, not on every render
 
   const handleSaveProfile = async () => {
     try {
