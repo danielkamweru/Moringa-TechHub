@@ -45,7 +45,7 @@ function AppContent() {
         }
       }
     }
-  }, [isAuthenticated, user, location, navigate])
+  }, [isAuthenticated, user]) // Remove location from dependencies
 
   // Load user data only if authenticated
   useEffect(() => {
