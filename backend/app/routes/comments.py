@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.database.connection import get_db
-from app.database.models import User, Content, Comment, RoleEnum, CommentLike
+from app.database.models import User, Content, Comment, RoleEnum, CommentLike, CommentReport
 from app.schemas.schemas import CommentCreate, CommentResponse
 from app.core.dependencies import get_current_user
 
@@ -269,4 +269,43 @@ def like_comment(
         "message": f"Comment {action} successfully",
         "likes_count": likes_count,
         "is_liked": action == "liked"
+    }
+
+@router.post("/{comment_id}/report")
+def report_comment(
+    comment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Report a comment"""
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comment not found"
+        )
+    
+    # Check if user already reported this comment
+    existing_report = db.query(CommentReport).filter(
+        CommentReport.user_id == current_user.id,
+        CommentReport.comment_id == comment_id
+    ).first()
+    
+    if existing_report:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already reported this comment"
+        )
+    
+    # Create report
+    new_report = CommentReport(
+        user_id=current_user.id,
+        comment_id=comment_id
+    )
+    db.add(new_report)
+    db.commit()
+    
+    return {
+        "comment_id": comment_id,
+        "message": "Comment reported successfully"
     }

@@ -170,6 +170,17 @@ class CommentLike(Base):
     user = relationship("User")
     comment = relationship("Comment")
 
+class CommentReport(Base):
+    __tablename__ = "comment_reports"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    comment_id = Column(Integer, ForeignKey("comments.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    user = relationship("User")
+    comment = relationship("Comment")
+
 class Notification(Base):
     __tablename__ = "notifications"
     

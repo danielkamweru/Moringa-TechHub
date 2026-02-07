@@ -5,7 +5,7 @@ export const fetchComments = createAsyncThunk(
   'comments/fetchComments',
   async (contentId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/comments/content/${contentId}`)
+      const response = await api.get(`/comments/content/${contentId}/`)
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch comments')
@@ -22,7 +22,7 @@ export const addComment = createAsyncThunk(
         text: commentData.text,
         parent_id: commentData.parentId ?? commentData.parent_id ?? null
       }
-      const response = await api.post('/comments', payload)
+      const response = await api.post('/comments/', payload)
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to add comment')
@@ -34,7 +34,7 @@ export const updateComment = createAsyncThunk(
   'comments/updateComment',
   async ({ id, text }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/comments/${id}`, { text })
+      const response = await api.put(`/comments/${id}/`, { text })
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update comment')
@@ -70,7 +70,7 @@ export const deleteComment = createAsyncThunk(
   'comments/deleteComment',
   async (id, { rejectWithValue }) => {
     try {
-      await api.delete(`/comments/${id}`)
+      await api.delete(`/comments/${id}/`)
       return id
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to delete comment')
