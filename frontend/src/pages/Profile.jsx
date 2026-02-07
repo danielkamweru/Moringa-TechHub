@@ -100,13 +100,13 @@ const Profile = () => {
       console.log('New avatar URL:', avatarUrlWithTimestamp)
       
       // Update user in Redux store using proper action
-      if (response.data.user) {
+      if (response.data) {
         console.log('Updating Redux store with user:', response.data.user)
         console.log('Avatar URL from upload response:', response.data.avatar_url)
-        console.log('User avatar_url in response:', response.data.user.avatar_url)
+        console.log('User avatar_url in response:', response.data.user?.avatar_url)
         console.log('Current formData.avatar_url BEFORE update:', formData.avatar_url)
         
-        // Update the user object with the avatar URL from the upload response
+        // Update user object with avatar URL from upload response
         const updatedUser = {
           ...response.data.user,
           profile: {
