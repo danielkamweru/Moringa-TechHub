@@ -359,10 +359,20 @@ async def upload_avatar(
     # Save file
     try:
         print(f"Saving file to: {file_path}")
+        print(f"Uploads directory: {uploads_dir}")
+        print(f"Unique filename: {unique_filename}")
         with open(file_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
         print(f"File saved successfully. Size: {len(content)} bytes")
+        
+        # Verify file exists immediately after saving
+        if os.path.exists(file_path):
+            print(f"✅ File verified at: {file_path}")
+            print(f"File size: {os.path.getsize(file_path)} bytes")
+        else:
+            print(f"❌ File NOT found at: {file_path}")
+            
     except Exception as e:
         print(f"Error saving file: {e}")
         raise HTTPException(
@@ -400,5 +410,8 @@ async def upload_avatar(
     # Get the base URL from the request
     base_url = f"{request.url.scheme}://{request.url.netloc}"
     full_avatar_url = f"{base_url}{avatar_url}" if avatar_url else None
+    
+    print(f"DEBUG: Returning avatar_url: {full_avatar_url}")
+    print(f"DEBUG: User profile.avatar_url: {user.profile.avatar_url if user.profile else 'No profile'}")
     
     return {"avatar_url": full_avatar_url, "user": user}
