@@ -143,7 +143,7 @@ const Profile = () => {
         }, 1000)
       }
       // Show success message
-      alert('Profile picture updated successfully!')
+      alert('Profile updated successfully!')
       
       // Force re-render of avatar component
       setAvatarKey(prev => prev + 1)
