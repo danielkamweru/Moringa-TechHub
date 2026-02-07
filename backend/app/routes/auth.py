@@ -11,6 +11,7 @@ from app.schemas.schemas import (
     UserCreate,
     UserResponse,
     UserUpdate,
+    ProfileResponse,
     LoginRequest,
     Token,
 )
@@ -238,7 +239,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         "role": user.role.value,  # Ensure role is string value
         "is_active": user.is_active,
         "created_at": user.created_at,
-        "profile": user.profile
+        "profile": ProfileResponse.from_attributes(user.profile) if user.profile else None
     }
 
 
@@ -282,7 +283,18 @@ def update_profile(
     
     # Reload with profile
     user = db.query(User).options(joinedload(User.profile)).filter(User.id == current_user.id).first()
-    return user
+    
+    # Return with proper schema structure
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role.value,
+        "is_active": user.is_active,
+        "created_at": user.created_at,
+        "profile": ProfileResponse.from_attributes(user.profile) if user.profile else None
+    }
 
 
 @router.post("/upload-avatar")

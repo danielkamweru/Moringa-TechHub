@@ -49,6 +49,21 @@ class UserResponse(UserBase):
     role: RoleEnum
     is_active: bool
     created_at: datetime
+    profile: Optional['ProfileResponse'] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProfileResponse(BaseModel):
+    id: int
+    user_id: int
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    github_url: Optional[str] = None
+    twitter_url: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
