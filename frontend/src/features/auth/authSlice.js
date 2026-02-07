@@ -108,6 +108,25 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    updateUser: (state, action) => {
+      state.user = action.payload
+      // Ensure avatar_url is properly set from profile if available
+      if (action.payload?.profile?.avatar_url) {
+        const avatarUrl = action.payload.profile.avatar_url.startsWith('http')
+          ? action.payload.profile.avatar_url
+          : `${BASE_URL}${action.payload.profile.avatar_url}`
+        // Update the profile avatar_url with full URL
+        if (state.user.profile) {
+          state.user.profile.avatar_url = avatarUrl
+        }
+      }
+      // Also update bio if present in profile
+      if (action.payload?.profile?.bio !== undefined) {
+        if (state.user.profile) {
+          state.user.profile.bio = action.payload.profile.bio
+        }
+      }
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -160,11 +179,15 @@ const authSlice = createSlice({
         state.token = action.payload.token
         state.isAuthenticated = true
         state.error = null
-        // Ensure avatar_url is properly set from profile if available
-        if (action.payload.user?.profile?.avatar_url && !action.payload.user.avatar_url) {
-          state.user.avatar_url = action.payload.user.profile.avatar_url.startsWith('http')
+        // Ensure avatar_url is properly set in profile if available
+        if (action.payload.user?.profile?.avatar_url) {
+          const avatarUrl = action.payload.user.profile.avatar_url.startsWith('http')
             ? action.payload.user.profile.avatar_url
             : `${BASE_URL}${action.payload.user.profile.avatar_url}`
+          // Update the profile avatar_url with full URL
+          if (state.user.profile) {
+            state.user.profile.avatar_url = avatarUrl
+          }
         }
       })
       .addCase(checkAuth.rejected, (state) => {
@@ -177,22 +200,26 @@ const authSlice = createSlice({
         state.user = action.payload
         // Ensure avatar_url is properly set from response
         // Priority 1: Check direct avatar_url on response (MAIN RESPONSE)
-        if (action.payload?.avatar_url) {
-          console.log('Setting avatar_url from main response:', action.payload.avatar_url)
-          state.user.avatar_url = action.payload.avatar_url.startsWith('http')
-            ? action.payload.avatar_url
-            : `${BASE_URL}${action.payload.avatar_url}`
-        } 
-        // Priority 2: Fallback to profile.avatar_url
-        else if (action.payload?.profile?.avatar_url) {
+        if (action.payload?.profile?.avatar_url) {
           console.log('Setting avatar_url from profile response:', action.payload.profile.avatar_url)
-          state.user.avatar_url = action.payload.profile.avatar_url.startsWith('http')
+          const avatarUrl = action.payload.profile.avatar_url.startsWith('http')
             ? action.payload.profile.avatar_url
             : `${BASE_URL}${action.payload.profile.avatar_url}`
+          // Update the profile avatar_url with full URL
+          if (state.user.profile) {
+            state.user.profile.avatar_url = avatarUrl
+          }
+        }
+        // Also update bio if present in profile
+        if (action.payload?.profile?.bio !== undefined) {
+          console.log('Setting bio from profile response:', action.payload.profile.bio)
+          if (state.user.profile) {
+            state.user.profile.bio = action.payload.profile.bio
+          }
         }
       })
   },
 })
 
-export const { logout, clearError } = authSlice.actions
+export const { logout, clearError, updateUser } = authSlice.actions
 export default authSlice.reducer

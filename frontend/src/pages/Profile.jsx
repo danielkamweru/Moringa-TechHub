@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { User, Mail, Edit2, Save, X, Camera, Bell, BookOpen, Heart, Upload } from 'lucide-react'
-import { updateUserProfile } from '../features/auth/authSlice'
+import { updateUserProfile, updateUser } from '../features/auth/authSlice'
 import { fetchUserContent } from '../features/content/contentSlice'
 import { fetchUserWishlist } from '../features/wishlist/wishlistSlice'
 import api from '../services/api'
@@ -105,8 +105,8 @@ const Profile = () => {
         console.log('User avatar_url in response:', response.data.user.avatar_url)
         console.log('Current formData.avatar_url BEFORE update:', formData.avatar_url)
         
-        // Use the proper updateUserProfile action to update Redux state
-        dispatch(updateUserProfile(response.data.user))
+        // Directly update the user state in Redux (not using updateUserProfile)
+        dispatch(updateUser(response.data.user))
         
         // Also update the local form state immediately
         setFormData(prev => ({ ...prev, avatar_url: avatarUrlWithTimestamp }))
