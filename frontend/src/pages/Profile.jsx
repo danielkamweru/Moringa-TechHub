@@ -27,14 +27,14 @@ const Profile = () => {
     console.log('=== useEffect RUNNING - user changed ===', user)
     if (user) {
       console.log('Setting up formData with user data:', {
-        avatar_url: user.profile?.avatar_url,
+        avatar_url: user.avatar_url, // Use user.avatar_url (full URL) instead of user.profile?.avatar_url
         full_name: user.full_name,
         bio: user.profile?.bio
       })
       setFormData({
         full_name: user.full_name || '',
         bio: user.profile?.bio || '',
-        avatar_url: user.profile?.avatar_url || '',
+        avatar_url: user.avatar_url || '', // Use user.avatar_url (full URL) instead of user.profile?.avatar_url
         interests: user.interests || []
       })
       dispatch(fetchUserContent(user.id))
@@ -239,7 +239,6 @@ const Profile = () => {
                   <label
                     htmlFor="avatar-upload"
                     className="cursor-pointer text-white hover:text-blue-200 transition-colors"
-                    title="Change profile picture"
                   >
                     {uploading ? (
                       <div className="animate-spin w-6 h-6 border-2 border-white border-t-transparent rounded-full" />
@@ -248,13 +247,6 @@ const Profile = () => {
                     )}
                   </label>
                 </div>
-                
-                {/* Show upload indicator when editing */}
-                {isEditing && (
-                  <div className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-1 rounded-full">
-                    <Camera size={12} />
-                  </div>
-                )}
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{user?.full_name}</h1>
@@ -334,104 +326,17 @@ const Profile = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                    {formData.avatar_url ? (
-                      <img 
-                        key={avatarKey} // Force re-render when avatarKey changes
-                        src={formData.avatar_url} 
-                        alt="Avatar preview" 
-                        className="w-full h-full rounded-full object-cover" 
-                        onLoad={() => console.log('Preview avatar loaded:', formData.avatar_url)}
-                        onError={(e) => {
-                          console.error('Preview avatar failed to load:', formData.avatar_url);
-                          // Try fallback to user profile avatar
-                          if (user?.profile?.avatar_url && formData.avatar_url !== user?.profile?.avatar_url) {
-                            // Ensure fallback URL has full domain
-                            const fallbackUrl = user.profile.avatar_url.startsWith('http') 
-                              ? user.profile.avatar_url 
-                              : `https://moringa-techhub.onrender.com${user.profile.avatar_url}`;
-                            e.target.src = fallbackUrl;
-                          } else {
-                            e.target.style.display = 'none';
-                          }
-                        }}
-                      />
-                    ) : user?.profile?.avatar_url ? (
-                      <img 
-                        key={`preview-fallback-${avatarKey}`} // Force re-render when avatarKey changes
-                        src={user.profile.avatar_url.startsWith('http') 
-                          ? user.profile.avatar_url 
-                          : `https://moringa-techhub.onrender.com${user.profile.avatar_url}`} 
-                        alt="Avatar preview" 
-                        className="w-full h-full rounded-full object-cover" 
-                        onLoad={() => console.log('Preview fallback loaded:', user.profile.avatar_url)}
-                        onError={(e) => {
-                          console.error('Preview fallback failed:', user.profile.avatar_url);
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <User size={32} className="text-gray-400" />
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="profile-image-upload"
-                      disabled={uploading}
-                    />
-                    <label
-                      htmlFor="profile-image-upload"
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
-                    >
-                      {uploading ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                          <span>Uploading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Camera size={18} />
-                          <span>Change Picture</span>
-                        </>
-                      )}
-                    </label>
-                    <p className="text-xs text-gray-500 mt-1">
-                      JPG, PNG or GIF (max 5MB)
-                    </p>
-                  </div>
-                </div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">About Myself</label>
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                  className="w-full p-2 border rounded-lg h-24 resize-none"
+                  placeholder="Tell us about yourself..."
+                />
               </div>
             </div>
           </div>
         )}
-
-        {/* Navigation Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
-              {tabs.map((tab) => {
-                const Icon = tab.icon
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 py-4 px-2 border-b-2 font-medium text-sm ${
-                      activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500'
-                    }`}
-                  >
-                    <Icon size={18} />
-                    {tab.label}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
 
           <div className="p-6">
             {activeTab === 'overview' && (
