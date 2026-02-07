@@ -11,7 +11,6 @@ from app.schemas.schemas import (
     UserCreate,
     UserResponse,
     UserUpdate,
-    ProfileResponse,
     LoginRequest,
     Token,
 )
@@ -239,7 +238,17 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         "role": user.role.value,  # Ensure role is string value
         "is_active": user.is_active,
         "created_at": user.created_at,
-        "profile": ProfileResponse.from_attributes(user.profile) if user.profile else None
+        "profile": {
+            "id": user.profile.id,
+            "user_id": user.profile.user_id,
+            "bio": user.profile.bio,
+            "avatar_url": user.profile.avatar_url,
+            "linkedin_url": user.profile.linkedin_url,
+            "github_url": user.profile.github_url,
+            "twitter_url": user.profile.twitter_url,
+            "created_at": user.profile.created_at,
+            "updated_at": user.profile.updated_at
+        } if user.profile else None
     }
 
 
@@ -252,6 +261,8 @@ def update_profile(
     from app.database.models import Profile
     from sqlalchemy.orm import joinedload
     
+    print(f"DEBUG: Received user_update: {user_update}")
+    
     user = db.query(User).filter(User.id == current_user.id).first()
     if not user:
         raise HTTPException(
@@ -261,28 +272,35 @@ def update_profile(
     
     # Update user fields
     update_data = user_update.dict(exclude_unset=True)
+    print(f"DEBUG: update_data: {update_data}")
     profile_fields = {'bio', 'avatar_url'}
     user_fields = {k: v for k, v in update_data.items() if k not in profile_fields}
+    print(f"DEBUG: user_fields: {user_fields}")
+    print(f"DEBUG: profile_fields: {profile_fields}")
     
     for field, value in user_fields.items():
         setattr(user, field, value)
     
     # Update or create profile for bio and avatar_url
     profile_fields_data = {k: v for k, v in update_data.items() if k in profile_fields}
+    print(f"DEBUG: profile_fields_data: {profile_fields_data}")
     if profile_fields_data:
         profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
         if profile:
             for field, value in profile_fields_data.items():
                 setattr(profile, field, value)
+            print(f"DEBUG: Updated existing profile: {profile.bio}")
         else:
             profile = Profile(user_id=current_user.id, **profile_fields_data)
             db.add(profile)
+            print(f"DEBUG: Created new profile: {profile.bio}")
     
     db.commit()
     db.refresh(user)
     
     # Reload with profile
     user = db.query(User).options(joinedload(User.profile)).filter(User.id == current_user.id).first()
+    print(f"DEBUG: Final user profile bio: {user.profile.bio if user.profile else 'No profile'}")
     
     # Return with proper schema structure
     return {
@@ -293,7 +311,17 @@ def update_profile(
         "role": user.role.value,
         "is_active": user.is_active,
         "created_at": user.created_at,
-        "profile": ProfileResponse.from_attributes(user.profile) if user.profile else None
+        "profile": {
+            "id": user.profile.id,
+            "user_id": user.profile.user_id,
+            "bio": user.profile.bio,
+            "avatar_url": user.profile.avatar_url,
+            "linkedin_url": user.profile.linkedin_url,
+            "github_url": user.profile.github_url,
+            "twitter_url": user.profile.twitter_url,
+            "created_at": user.profile.created_at,
+            "updated_at": user.profile.updated_at
+        } if user.profile else None
     }
 
 
