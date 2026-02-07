@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { User, Mail, Edit2, Save, X, Github, Linkedin, Camera, Bell, BookOpen, Heart, Upload } from 'lucide-react'
+import { User, Mail, Edit2, Save, X, Camera, Bell, BookOpen, Heart, Upload } from 'lucide-react'
 import { updateUserProfile } from '../features/auth/authSlice'
 import { fetchUserContent } from '../features/content/contentSlice'
 import { fetchUserWishlist } from '../features/wishlist/wishlistSlice'
@@ -20,8 +20,6 @@ const Profile = () => {
     full_name: '',
     bio: '',
     avatar_url: '',
-    github_url: '',
-    linkedin_url: '',
     interests: []
   })
 
@@ -29,15 +27,14 @@ const Profile = () => {
     console.log('=== useEffect RUNNING - user changed ===', user)
     if (user) {
       console.log('Setting up formData with user data:', {
-        avatar_url: user.avatar_url,
-        full_name: user.full_name
+        avatar_url: user.avatar_url || user.profile?.avatar_url,
+        full_name: user.full_name,
+        bio: user.bio || user.profile?.bio
       })
       setFormData({
         full_name: user.full_name || '',
-        bio: user.bio || '',
-        avatar_url: user.avatar_url || '',
-        github_url: user.github_url || '',
-        linkedin_url: user.linkedin_url || '',
+        bio: user.bio || user.profile?.bio || '',
+        avatar_url: user.avatar_url || user.profile?.avatar_url || '',
         interests: user.interests || []
       })
       dispatch(fetchUserContent(user.id))
@@ -154,10 +151,8 @@ const Profile = () => {
     if (user) {
       setFormData({
         full_name: user.full_name || '',
-        bio: user.bio || '',
-        avatar_url: user.avatar_url || '',
-        github_url: user.github_url || '',
-        linkedin_url: user.linkedin_url || '',
+        bio: user.bio || user.profile?.bio || '',
+        avatar_url: user.avatar_url || user.profile?.avatar_url || '',
         interests: user.interests || []
       })
     }
@@ -188,28 +183,28 @@ const Profile = () => {
                       onError={(e) => {
                         console.error('Avatar image failed to load:', formData.avatar_url);
                         // Try fallback to user profile avatar
-                        if (user?.profile?.avatar_url && formData.avatar_url !== user?.profile?.avatar_url) {
+                        if ((user?.profile?.avatar_url || user?.avatar_url) && formData.avatar_url !== (user?.profile?.avatar_url || user?.avatar_url)) {
                           // Ensure fallback URL has full domain
-                          const fallbackUrl = user.profile.avatar_url.startsWith('http') 
-                            ? user.profile.avatar_url 
-                            : `https://moringa-techhub.onrender.com${user.profile.avatar_url}`;
+                          const fallbackUrl = (user?.profile?.avatar_url || user?.avatar_url).startsWith('http') 
+                            ? (user?.profile?.avatar_url || user?.avatar_url) 
+                            : `https://moringa-techhub.onrender.com${user?.profile?.avatar_url || user?.avatar_url}`;
                           e.target.src = fallbackUrl;
                         } else {
                           e.target.style.display = 'none';
                         }
                       }} 
                     />
-                  ) : user?.profile?.avatar_url ? (
+                  ) : (user?.profile?.avatar_url || user?.avatar_url) ? (
                     <img 
                       key={`fallback-${avatarKey}`} // Force re-render when avatarKey changes
-                      src={user.profile.avatar_url.startsWith('http') 
-                        ? user.profile.avatar_url 
-                        : `https://moringa-techhub.onrender.com${user.profile.avatar_url}`} 
+                      src={(user?.profile?.avatar_url || user?.avatar_url).startsWith('http') 
+                        ? (user?.profile?.avatar_url || user?.avatar_url) 
+                        : `https://moringa-techhub.onrender.com${user?.profile?.avatar_url || user?.avatar_url}`} 
                       alt="Avatar" 
                       className="w-full h-full rounded-full object-cover" 
-                      onLoad={() => console.log('Fallback avatar loaded:', user.profile.avatar_url)}
+                      onLoad={() => console.log('Fallback avatar loaded:', user?.profile?.avatar_url || user?.avatar_url)}
                       onError={(e) => {
-                        console.error('Fallback avatar failed to load:', user.profile.avatar_url);
+                        console.error('Fallback avatar failed to load:', user?.profile?.avatar_url || user?.avatar_url);
                         e.target.style.display = 'none';
                       }} 
                     />
@@ -284,24 +279,11 @@ const Profile = () => {
               />
             ) : (
               <p className="text-gray-700">
-                {user?.bio || 'No bio added yet. Click edit to add your bio.'}
+                {user?.bio || user?.profile?.bio || 'No bio added yet. Click edit to add your bio.'}
               </p>
             )}
           </div>
 
-          {/* Social Links */}
-          <div className="mt-6 flex items-center gap-4">
-            {formData.github_url && (
-              <a href={formData.github_url} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">
-                <Github size={20} />
-              </a>
-            )}
-            {formData.linkedin_url && (
-              <a href={formData.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-blue-600">
-                <Linkedin size={20} />
-              </a>
-            )}
-          </div>
 
           {/* Save/Cancel Buttons */}
           {isEditing && (
@@ -352,28 +334,28 @@ const Profile = () => {
                         onError={(e) => {
                           console.error('Preview avatar failed to load:', formData.avatar_url);
                           // Try fallback to user profile avatar
-                          if (user?.profile?.avatar_url && formData.avatar_url !== user?.profile?.avatar_url) {
+                          if ((user?.profile?.avatar_url || user?.avatar_url) && formData.avatar_url !== (user?.profile?.avatar_url || user?.avatar_url)) {
                             // Ensure fallback URL has full domain
-                            const fallbackUrl = user.profile.avatar_url.startsWith('http') 
-                              ? user.profile.avatar_url 
-                              : `https://moringa-techhub.onrender.com${user.profile.avatar_url}`;
+                            const fallbackUrl = (user?.profile?.avatar_url || user?.avatar_url).startsWith('http') 
+                              ? (user?.profile?.avatar_url || user?.avatar_url) 
+                              : `https://moringa-techhub.onrender.com${user?.profile?.avatar_url || user?.avatar_url}`;
                             e.target.src = fallbackUrl;
                           } else {
                             e.target.style.display = 'none';
                           }
                         }}
                       />
-                    ) : user?.profile?.avatar_url ? (
+                    ) : (user?.profile?.avatar_url || user?.avatar_url) ? (
                       <img 
                         key={`preview-fallback-${avatarKey}`} // Force re-render when avatarKey changes
-                        src={user.profile.avatar_url.startsWith('http') 
-                          ? user.profile.avatar_url 
-                          : `https://moringa-techhub.onrender.com${user.profile.avatar_url}`} 
+                        src={(user?.profile?.avatar_url || user?.avatar_url).startsWith('http') 
+                          ? (user?.profile?.avatar_url || user?.avatar_url) 
+                          : `https://moringa-techhub.onrender.com${user?.profile?.avatar_url || user?.avatar_url}`} 
                         alt="Avatar preview" 
                         className="w-full h-full rounded-full object-cover" 
-                        onLoad={() => console.log('Preview fallback loaded:', user.profile.avatar_url)}
+                        onLoad={() => console.log('Preview fallback loaded:', user?.profile?.avatar_url || user?.avatar_url)}
                         onError={(e) => {
-                          console.error('Preview fallback failed:', user.profile.avatar_url);
+                          console.error('Preview fallback failed:', user?.profile?.avatar_url || user?.avatar_url);
                           e.target.style.display = 'none';
                         }}
                       />
@@ -411,26 +393,6 @@ const Profile = () => {
                     </p>
                   </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">GitHub URL</label>
-                <input
-                  type="url"
-                  value={formData.github_url}
-                  onChange={(e) => setFormData({...formData, github_url: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="https://github.com/username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
-                <input
-                  type="url"
-                  value={formData.linkedin_url}
-                  onChange={(e) => setFormData({...formData, linkedin_url: e.target.value})}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="https://linkedin.com/in/username"
-                />
               </div>
             </div>
           </div>
