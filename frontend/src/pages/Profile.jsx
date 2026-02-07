@@ -102,11 +102,21 @@ const Profile = () => {
       // Update user in Redux store using proper action
       if (response.data.user) {
         console.log('Updating Redux store with user:', response.data.user)
+        console.log('Avatar URL from upload response:', response.data.avatar_url)
         console.log('User avatar_url in response:', response.data.user.avatar_url)
         console.log('Current formData.avatar_url BEFORE update:', formData.avatar_url)
         
+        // Update the user object with the avatar URL from the upload response
+        const updatedUser = {
+          ...response.data.user,
+          profile: {
+            ...response.data.user.profile,
+            avatar_url: response.data.avatar_url // Use the avatar URL from upload response
+          }
+        }
+        
         // Directly update the user state in Redux (not using updateUserProfile)
-        dispatch(updateUser(response.data.user))
+        dispatch(updateUser(updatedUser))
         
         // Also update the local form state immediately
         setFormData(prev => ({ ...prev, avatar_url: avatarUrlWithTimestamp }))
