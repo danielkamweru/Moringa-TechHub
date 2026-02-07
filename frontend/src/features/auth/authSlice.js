@@ -109,9 +109,11 @@ const authSlice = createSlice({
       state.error = null
     },
     updateUser: (state, action) => {
+      console.log('DEBUG: updateUser action called with payload:', action.payload)
       state.user = action.payload
       // Ensure avatar_url is properly set from profile if available
       if (action.payload?.profile?.avatar_url) {
+        console.log('DEBUG: Found avatar_url in profile:', action.payload.profile.avatar_url)
         const avatarUrl = action.payload.profile.avatar_url.startsWith('http')
           ? action.payload.profile.avatar_url
           : `${BASE_URL}${action.payload.profile.avatar_url}`
@@ -119,12 +121,17 @@ const authSlice = createSlice({
         if (state.user.profile) {
           state.user.profile.avatar_url = avatarUrl
         }
+      } else {
+        console.log('DEBUG: No avatar_url found in profile')
       }
       // Also update bio if present in profile
       if (action.payload?.profile?.bio !== undefined) {
+        console.log('DEBUG: Found bio in profile:', action.payload.profile.bio)
         if (state.user.profile) {
           state.user.profile.bio = action.payload.profile.bio
         }
+      } else {
+        console.log('DEBUG: No bio found in profile')
       }
     }
   },
