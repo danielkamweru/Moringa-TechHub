@@ -21,8 +21,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://moringa-tech-hub-kappa.vercel.app",
-        "http://localhost:5174",
-        "http://localhost:3000"
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "https://moringa-techhub.onrender.com"  # Add production URL for direct API access
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
@@ -155,4 +157,13 @@ async def debug_routes():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print("Starting Moringa TechHub Backend...")
+    print(" Available on: http://localhost:8000")
+    print(" Frontend should connect to: http://localhost:5174")
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8004,
+        reload=True,
+        log_level="info"
+    )
