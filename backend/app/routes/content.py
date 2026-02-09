@@ -3,13 +3,50 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 from typing import List, Optional
 from datetime import datetime
+import os
 from app.database.connection import get_db
-from app.database.models import User, Content, ContentStatusEnum, Like, Category, RoleEnum, Notification, NotificationTypeEnum, user_wishlist
+from app.database.models import User, Content, ContentStatusEnum, Like, Category, RoleEnum, Notification, NotificationTypeEnum, user_wishlist, user_categories
 from app.database.models import Comment as ContentComment
 from app.schemas.schemas import ContentCreate, ContentUpdate, ContentResponse, LikeCreate
 from app.core.dependencies import get_current_user, require_admin, require_tech_writer_or_admin
 
+# Environment-based logging
+DEBUG_MODE = os.getenv("ENVIRONMENT") == "development"
+
 router = APIRouter()
+
+def notify_subscribers_of_new_content(content: Content, db: Session):
+    """Send notifications to all users subscribed to the content's category"""
+    try:
+        # Get all subscribers of this content's category
+        subscribers = db.query(User).join(
+            user_categories, User.id == user_categories.c.user_id
+        ).filter(
+            user_categories.c.category_id == content.category_id
+        ).all()
+        
+        # Create notifications for each subscriber
+        for subscriber in subscribers:
+            # Don't notify the author themselves
+            if subscriber.id != content.author_id:
+                notification = Notification(
+                    user_id=subscriber.id,
+                    notification_type=NotificationTypeEnum.NEW_CONTENT,
+                    title=f"New Content in {content.category.name}",
+                    message=f"{content.author.full_name or content.author.username} posted new content: {content.title}",
+                    related_content_id=content.id
+                )
+                db.add(notification)
+        
+        db.commit()
+        # Log notification count for monitoring
+        if DEBUG_MODE:
+            print(f"Sent notifications to {len(subscribers)} subscribers for new content in category {content.category.name}")
+    except Exception as e:
+        # Log error properly in production
+        if DEBUG_MODE:
+            print(f"Error sending notifications: {e}")
+        db.rollback()
 
 @router.get("/public", response_model=List[ContentResponse])
 def get_public_content(
@@ -59,8 +96,7 @@ def get_public_content(
                     "media_url": content.media_url,
                     "thumbnail_url": content.thumbnail_url,
                     "tags": getattr(content, 'tags', None),
-                    "views_count": content.views_count or 0,
-                    "created_at": content.created_at.isoformat() if content.created_at else None,
+                                        "created_at": content.created_at.isoformat() if content.created_at else None,
                     "updated_at": content.updated_at.isoformat() if content.updated_at else None,
                     "published_at": content.published_at.isoformat() if content.published_at else None,
                     "author_id": content.author_id,
@@ -181,8 +217,7 @@ def get_content(
                     "media_url": content.media_url,
                     "thumbnail_url": content.thumbnail_url,
                     "tags": getattr(content, 'tags', None),
-                    "views_count": content.views_count or 0,
-                    "created_at": content.created_at.isoformat() if content.created_at else None,
+                                        "created_at": content.created_at.isoformat() if content.created_at else None,
                     "updated_at": content.updated_at.isoformat() if content.updated_at else None,
                     "published_at": content.published_at.isoformat() if content.published_at else None,
                     "author_id": content.author_id,
@@ -249,6 +284,9 @@ def create_content(
     db.commit()
     db.refresh(db_content)
     
+    # Send notifications to category subscribers
+    notify_subscribers_of_new_content(db_content, db)
+    
     # Create notification for content creator
     creator_notification = Notification(
         user_id=current_user.id,
@@ -313,8 +351,7 @@ def get_user_content(
                     "thumbnail_url": content.thumbnail_url,
                     "tags": content.tags,
                     "status": content.status,
-                    "views_count": content.views_count,
-                    "created_at": content.created_at,
+                                        "created_at": content.created_at,
                     "updated_at": content.updated_at,
                     "published_at": content.published_at,
                     "author_id": content.author_id,
@@ -395,8 +432,7 @@ def get_user_wishlist(
                     "media_url": content.media_url,
                     "thumbnail_url": content.thumbnail_url,
                     "tags": content.tags,
-                    "views_count": content.views_count or 0,
-                    "created_at": content.created_at.isoformat() if content.created_at else None,
+                                        "created_at": content.created_at.isoformat() if content.created_at else None,
                     "updated_at": content.updated_at.isoformat() if content.updated_at else None,
                     "published_at": content.published_at.isoformat() if content.published_at else None,
                     "author_id": content.author_id,
@@ -489,11 +525,7 @@ def get_content_by_id(
             detail="Content not found"
         )
     
-    # Increment view count
-    content.views_count = (content.views_count or 0) + 1
-    db.commit()
-    
-    # Add counts
+    # Add counts (don't increment views here - let the dedicated view endpoint handle it)
     likes_count = db.query(Like).filter(
         Like.content_id == content.id, Like.is_like == True
     ).count()
@@ -512,8 +544,7 @@ def get_content_by_id(
         "media_url": content.media_url,
         "thumbnail_url": content.thumbnail_url,
         "tags": content.tags if hasattr(content, 'tags') else None,
-        "views_count": content.views_count or 0,
-        "created_at": content.created_at.isoformat() if content.created_at else None,
+                "created_at": content.created_at.isoformat() if content.created_at else None,
         "updated_at": content.updated_at.isoformat() if content.updated_at else None,
         "published_at": content.published_at.isoformat() if content.published_at else None,
         "author_id": content.author_id,
@@ -672,18 +703,7 @@ def approve_content(
 
     # Notify category subscribers about new content
     if content.category_id:
-        category = db.query(Category).options(joinedload(Category.subscribers)).filter(Category.id == content.category_id).first()
-        if category and category.subscribers:
-            for subscriber in category.subscribers:
-                if subscriber.id != content.author_id:
-                    notification = Notification(
-                        user_id=subscriber.id,
-                        notification_type=NotificationTypeEnum.STATUS_CHANGE,
-                        title=f"New content in {category.name}",
-                        message=f"\"{content.title}\" was just published.",
-                        related_content_id=content.id
-                    )
-                    db.add(notification)
+        notify_subscribers_of_new_content(content, db)
     
     # Commit all notifications
     db.commit()
@@ -884,29 +904,6 @@ def remove_from_wishlist(
         return {"message": "Content not in wishlist"}
     
     return {"message": "Content removed from wishlist"}
-
-@router.post("/{content_id}/view")
-def increment_views(
-    content_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Increment content view count"""
-    content = db.query(Content).filter(Content.id == content_id).first()
-    if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
-    
-    # Increment view count
-    content.views_count += 1
-    db.commit()
-    
-    return {
-        "message": "View count incremented",
-        "views_count": content.views_count
-    }
 
 @router.post("/{content_id}/flag")
 def flag_content(

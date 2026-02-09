@@ -155,7 +155,6 @@ class ContentUpdate(BaseModel):
 class ContentResponse(ContentBase):
     id: int
     status: ContentStatusEnum
-    views_count: int
     created_at: datetime
     updated_at: Optional[datetime]
     published_at: Optional[datetime]

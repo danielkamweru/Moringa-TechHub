@@ -180,11 +180,7 @@ const ContentCard = ({ content, compact = false, onLike, onSaveToWishlist, showA
         {/* Footer */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
           <div className="flex items-center gap-4 text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              <Eye size={14} />
-              {content.views_count || 0}
-            </span>
-            <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1">
               <Heart size={14} />
               {likesCount}
             </span>

@@ -1,22 +1,125 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+import os
 from app.database.connection import get_db
-from app.database.models import User, Category, Notification, NotificationTypeEnum
+from app.database.models import User, Content, Category, Notification, NotificationTypeEnum, user_categories
 from app.schemas.schemas import CategoryCreate, CategoryResponse
 from app.core.dependencies import get_current_user, require_tech_writer_or_admin
 
+# Environment-based logging
+DEBUG_MODE = os.getenv("ENVIRONMENT") == "development"
+
+# Try to import notification models
+try:
+    from app.database.models import Notification
+    NOTIFICATIONS_AVAILABLE = True
+except ImportError:
+    NOTIFICATIONS_AVAILABLE = False
+    if DEBUG_MODE:
+        print("Warning: Notification models not available, subscription notifications will be disabled")
+
 router = APIRouter()
 
+@router.get("")
 @router.get("/")
-def get_categories():
-    print("GET /api/categories called")
-    return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
+def get_categories(db: Session = Depends(get_db)):
+    categories = db.query(Category).all()
+    return categories
 
+@router.post("")
 @router.post("/")
-def create_category(category_data: dict):
-    print(f"POST /api/categories called: {category_data}")
-    return {"id": 999, "name": category_data.get("name", "New Category"), "description": category_data.get("description", ""), "color": category_data.get("color", "#3B82F6")}
+def create_category(
+    category: CategoryCreate,
+    current_user: User = Depends(require_tech_writer_or_admin),
+    db: Session = Depends(get_db)
+):
+    
+    # Check if category with this name already exists
+    existing_category = db.query(Category).filter(Category.name == category.name).first()
+    if existing_category:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Category with this name already exists"
+        )
+    
+    db_category = Category(
+        name=category.name,
+        description=category.description,
+        color=category.color,
+        created_by=current_user.id
+    )
+    
+    db.add(db_category)
+    db.commit()
+    db.refresh(db_category)
+    
+    return db_category
+
+@router.get("/user/subscriptions")
+def get_user_subscriptions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return current_user.subscribed_categories
+
+@router.post("/{category_id}/subscribe")
+def subscribe_to_category(
+    category_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    
+    if category not in current_user.subscribed_categories:
+        current_user.subscribed_categories.append(category)
+        db.commit()
+        
+        # Create notification if available
+        if NOTIFICATIONS_AVAILABLE:
+            try:
+                notification = Notification(
+                    user_id=current_user.id,
+                    type=NotificationTypeEnum.SUBSCRIPTION,
+                    title=f"Subscribed to {category.name}",
+                    message=f"You have successfully subscribed to the {category.name} category.",
+                    related_entity_type="category",
+                    related_entity_id=category_id
+                )
+                db.add(notification)
+                db.commit()
+            except Exception as e:
+                if DEBUG_MODE:
+                    print(f"Failed to create notification: {e}")
+    
+    return {"message": "Successfully subscribed to category", "category_id": category_id}
+
+@router.delete("/{category_id}/subscribe")
+def unsubscribe_from_category(
+    category_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Category not found"
+        )
+    
+    if category in current_user.subscribed_categories:
+        current_user.subscribed_categories.remove(category)
+        db.commit()
+        return {"message": "Successfully unsubscribed from category"}
+    
+    return {"message": "You were not subscribed to this category"}
 
 @router.get("/{category_id}", response_model=CategoryResponse)
 def get_category(
@@ -89,67 +192,3 @@ def delete_category(
     db.commit()
     
     return {"message": "Category deleted successfully"}
-
-@router.post("/{category_id}/subscribe")
-def subscribe_to_category(
-    category_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    category = db.query(Category).filter(Category.id == category_id).first()
-    if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found"
-        )
-    
-    if category not in current_user.subscribed_categories:
-        current_user.subscribed_categories.append(category)
-        db.commit()
-        
-        # Notify category creator about new subscriber (if creator exists and is not the subscriber)
-        if category.created_by and category.created_by != current_user.id:
-            print(f"Creating subscription notification for user {category.created_by} by user {current_user.id}")
-            notification = Notification(
-                user_id=category.created_by,
-                notification_type=NotificationTypeEnum.FOLLOW,
-                title="New Category Subscriber",
-                message=f"{current_user.full_name or current_user.username} subscribed to your category '{category.name}'",
-                related_content_id=category.id
-            )
-            db.add(notification)
-            db.commit()
-            print(f"Subscription notification created successfully")
-        else:
-            print(f"Subscription notification not created. category.created_by: {category.created_by}, current_user.id: {current_user.id}")
-        
-        return {"message": "Subscribed to category successfully"}
-    
-    return {"message": "Already subscribed to this category"}
-
-@router.delete("/{category_id}/subscribe")
-def unsubscribe_from_category(
-    category_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    category = db.query(Category).filter(Category.id == category_id).first()
-    if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found"
-        )
-    
-    if category in current_user.subscribed_categories:
-        current_user.subscribed_categories.remove(category)
-        db.commit()
-        return {"message": "Unsubscribed from category successfully"}
-    
-    return {"message": "Not subscribed to this category"}
-
-@router.get("/user/subscriptions", response_model=List[CategoryResponse])
-def get_user_subscriptions(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    return current_user.subscribed_categories

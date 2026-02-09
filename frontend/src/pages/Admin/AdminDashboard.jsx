@@ -214,7 +214,7 @@ const AdminDashboard = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
@@ -561,9 +561,6 @@ const AdminDashboard = () => {
                             )}
                           </div>
                           <p className="text-gray-600 text-sm">{category.description}</p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {category.content?.length || 0} items
-                          </p>
                         </div>
                         <div className="flex items-center gap-1">
                           <button 
@@ -853,7 +850,7 @@ const AdminDashboard = () => {
                 {getCategoryContentCount(showDeleteConfirm) > 0 && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                     <p className="text-yellow-800 text-sm font-medium">
-                      ⚠️ This category contains {getCategoryContentCount(showDeleteConfirm)} content item(s)
+                       This category contains {getCategoryContentCount(showDeleteConfirm)} content item(s)
                     </p>
                     <p className="text-yellow-700 text-xs mt-1">
                       Please move or delete the content first before deleting this category.

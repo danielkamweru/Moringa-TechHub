@@ -222,7 +222,6 @@ const ContentFeed = () => {
 
                   {/* Stats */}
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-sm text-gray-500">
-                    <span>{item.views_count || 0} views</span>
                     <span>By {item.author?.full_name || 'Anonymous'}</span>
                   </div>
                 </div>

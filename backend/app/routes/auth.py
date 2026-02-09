@@ -358,9 +358,12 @@ async def upload_avatar(
     
     # Save file
     try:
-        print(f"Saving file to: {file_path}")
-        print(f"Uploads directory: {uploads_dir}")
-        print(f"Unique filename: {unique_filename}")
+        # Debug logging for development only
+        if os.getenv("ENVIRONMENT") == "development":
+            print(f"Saving file to: {file_path}")
+            print(f"Uploads directory: {uploads_dir}")
+            print(f"Unique filename: {unique_filename}")
+        
         with open(file_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
@@ -368,13 +371,16 @@ async def upload_avatar(
         
         # Verify file exists immediately after saving
         if os.path.exists(file_path):
-            print(f"✅ File verified at: {file_path}")
-            print(f"File size: {os.path.getsize(file_path)} bytes")
+            if os.getenv("ENVIRONMENT") == "development":
+                print(f"✅ File verified at: {file_path}")
+                print(f"File size: {os.path.getsize(file_path)} bytes")
         else:
-            print(f"❌ File NOT found at: {file_path}")
+            if os.getenv("ENVIRONMENT") == "development":
+                print(f"File NOT found at: {file_path}")
             
     except Exception as e:
-        print(f"Error saving file: {e}")
+        if os.getenv("ENVIRONMENT") == "development":
+            print(f"Error saving file: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to save file: {str(e)}"

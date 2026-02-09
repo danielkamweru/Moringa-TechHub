@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database.connection import engine
@@ -16,13 +16,21 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Moringa TechHub API", version="1.0.0")
 
+# Add middleware to handle OPTIONS requests before route processing
+@app.middleware("http")
+async def handle_options_requests(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return {"message": "OK"}
+    response = await call_next(request)
+    return response
+
 # Configure CORS middleware - MUST be added right after app creation
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://moringa-tech-hub-kappa.vercel.app",
         "http://localhost:5173",
-        "http://localhost:8000",
+        "http://localhost:8000", 
         "http://localhost:3000",
         "https://moringa-techhub.onrender.com"  # Add production URL for direct API access
     ],
@@ -51,62 +59,61 @@ except Exception as e:
     logger.info("The API will start but database operations will fail until database is properly configured")
 
 # Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(users.router, prefix="/api/users", tags=["Users"])
-app.include_router(content.router, prefix="/api/content", tags=["Content"])
-# app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
-app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
-app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
-app.include_router(wishlist.router, prefix="/api/wishlist", tags=["Wishlist"])
-app.include_router(admin_enhanced.router, prefix="/api/admin", tags=["Admin"])
+print("=== Including routers ===")
+try:
+    app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+    print("✅ Auth router included")
+except Exception as e:
+    print(f"❌ Auth router error: {e}")
 
-# Add simple categories routes directly to bypass router issues
-@app.get("/api/categories")
-def get_categories_direct():
-    try:
-        from app.database.connection import get_db
-        from app.database.models import Category
-        db = next(get_db())
-        categories = db.query(Category).all()
-        return [{"id": c.id, "name": c.name, "description": c.description, "color": c.color} for c in categories]
-    except Exception as e:
-        return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
+try:
+    app.include_router(users.router, prefix="/api/users", tags=["Users"])
+    print("✅ Users router included")
+except Exception as e:
+    print(f"❌ Users router error: {e}")
 
-@app.post("/api/categories")
-def create_category_direct(data: dict):
-    try:
-        from app.database.connection import get_db
-        from app.database.models import Category
-        db = next(get_db())
-        
-        # Check if category already exists
-        existing = db.query(Category).filter(Category.name == data.get("name")).first()
-        if existing:
-            return {"error": "Category already exists"}
-            
-        category = Category(
-            name=data.get("name"),
-            description=data.get("description", ""),
-            color=data.get("color", "#3B82F6")
-        )
-        db.add(category)
-        db.commit()
-        db.refresh(category)
-        return {"id": category.id, "name": category.name, "description": category.description, "color": category.color}
-    except Exception as e:
-        return {"id": 999, "name": data.get("name", "New Category"), "description": data.get("description", ""), "color": data.get("color", "#3B82F6")}
+try:
+    app.include_router(content.router, prefix="/api/content", tags=["Content"])
+    print("✅ Content router included")
+except Exception as e:
+    print(f"❌ Content router error: {e}")
 
-@app.get("/api/wishlist")
-def get_wishlist_direct():
-    return [{"id": 1, "title": "Sample Wishlist Item", "content_text": "This is a sample item"}]
+try:
+    app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
+    print("✅ Categories router included")
+    print(f"Categories router routes: {len(categories.router.routes)}")
+    for route in categories.router.routes:
+        print(f"  {route.path}: {getattr(route, 'methods', 'N/A')}")
+except Exception as e:
+    print(f"❌ Categories router error: {e}")
+    import traceback
+    traceback.print_exc()
 
-@app.get("/api/users")
-def get_users_direct():
-    return [{"id": 1, "username": "admin", "email": "admin@example.com", "role": "admin"}]
+try:
+    app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
+    print("✅ Comments router included")
+except Exception as e:
+    print(f"❌ Comments router error: {e}")
 
-@app.get("/api/categories/user/subscriptions")
-def get_user_subscriptions_direct():
-    return [{"id": 1, "name": "Web Development", "description": "Web dev content", "color": "#3B82F6"}]
+try:
+    app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
+    print("✅ Notifications router included")
+except Exception as e:
+    print(f"❌ Notifications router error: {e}")
+
+try:
+    app.include_router(wishlist.router, prefix="/api/wishlist", tags=["Wishlist"])
+    print("✅ Wishlist router included")
+except Exception as e:
+    print(f"❌ Wishlist router error: {e}")
+
+try:
+    app.include_router(admin_enhanced.router, prefix="/api/admin", tags=["Admin"])
+    print("✅ Admin router included")
+except Exception as e:
+    print(f"❌ Admin router error: {e}")
+
+print("=== Router inclusion complete ===")
 
 # Serve static files (uploaded images)
 # Use persistent storage on Render, local storage for development
@@ -132,6 +139,11 @@ async def options_handler(path: str):
 #     response.headers["Pragma"] = "no-cache"
 #     response.headers["Expires"] = "0"
 #     return response
+
+# Add global OPTIONS handler for CORS preflight
+@app.options("/{path:path}")
+async def options_handler(request: Request, path: str):
+    return {"message": "OK"}
 
 @app.get("/")
 async def root():

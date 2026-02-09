@@ -8,7 +8,7 @@
   }
   
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 text-gray-900;
   }
 }
 
@@ -18,7 +18,7 @@
   }
   
   .btn-secondary {
-    @apply bg-gradient-to-r from-gray-200 to-gray-300 text-gray-900 px-4 py-2 rounded-lg hover:from-gray-300 hover:to-gray-400 transition-all font-medium;
+    @apply bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-4 py-2 rounded-lg hover:from-blue-200 hover:to-indigo-200 transition-all font-medium border border-blue-200;
   }
   
   .btn-accent {
@@ -30,19 +30,19 @@
   }
   
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm;
+    @apply w-full px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90 backdrop-blur-sm;
   }
   
   .card {
-    @apply bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50 hover:shadow-lg transition-all;
+    @apply bg-white/95 backdrop-blur-sm rounded-lg shadow-sm border border-blue-100/50 hover:shadow-lg transition-all;
   }
   
   .nav-link {
-    @apply text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors;
+    @apply text-blue-600/70 hover:text-blue-800 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-colors;
   }
   
   .nav-link-active {
-    @apply bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 border border-blue-200;
+    @apply bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 border border-blue-300;
   }
   
   .gradient-hero {
@@ -54,7 +54,7 @@
   }
   
   .glass {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+    @apply bg-white/85 backdrop-blur-sm border border-blue-100/30;
   }
   
   .gradient-mesh {
@@ -72,7 +72,7 @@
   }
   
   .glass {
-    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+    @apply bg-white/85 backdrop-blur-sm border border-blue-100/30;
   }
   
   .gradient-border {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { PenTool, Plus, FileText, BarChart3, CheckCircle, XCircle, Eye, Flag, Clock, Users, TrendingUp, Edit, Save, X, Folder } from 'lucide-react'
+import { PenTool, Plus, FileText, BarChart3, CheckCircle, XCircle, Flag, Clock, Users, TrendingUp, Edit, Save, X, Folder } from 'lucide-react'
 import { fetchContent, createContent, updateContent, approveContent, rejectContent, flagContent } from '../../features/content/contentSlice'
 import { fetchCategories, createCategory } from '../../features/categories/categoriesSlice'
 
@@ -180,11 +180,10 @@ const TechWriterDashboard = () => {
     { id: 'analytics', label: 'Analytics', icon: BarChart3 }
   ]
 
-  const totalViews = myContent.reduce((sum, item) => sum + (item.views_count || 0), 0)
   const publishedCount = myContent.filter(c => c.status === 'published').length
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
@@ -204,22 +203,13 @@ const TechWriterDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
               <FileText className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Content</p>
                 <p className="text-2xl font-bold text-gray-900">{myContent.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Views</p>
-                <p className="text-2xl font-bold text-gray-900">{totalViews.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -293,16 +283,12 @@ const TechWriterDashboard = () => {
                               </span>
                             </div>
                             <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                              <span>{item.views_count || 0} views</span>
-                              <span>{item.likes_count || 0} likes</span>
+                                                            <span>{item.likes_count || 0} likes</span>
                               <span>{item.comments_count || 0} comments</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
-                            <button className="text-blue-600 hover:bg-blue-50 p-2 rounded">
-                              <Eye size={16} />
-                            </button>
-                            <button 
+                                                        <button 
                               onClick={() => handleEditContent(item)}
                               className="text-gray-600 hover:bg-gray-50 p-2 rounded"
                               title="Edit"
@@ -399,16 +385,12 @@ const TechWriterDashboard = () => {
                               </span>
                             </div>
                             <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                              <span>{item.views_count || 0} views</span>
-                              <span>{item.likes_count || 0} likes</span>
+                                                            <span>{item.likes_count || 0} likes</span>
                               <span>{item.comments_count || 0} comments</span>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
-                            <button className="text-blue-600 hover:bg-blue-50 p-2 rounded">
-                              <Eye size={16} />
-                            </button>
-                            <button
+                                                        <button
                               onClick={() => handleFlagContent(item.id, 'inappropriate')}
                               className="text-orange-600 hover:bg-orange-50 p-2 rounded"
                             >
@@ -455,6 +437,9 @@ const TechWriterDashboard = () => {
                     </div>
                   ))}
                 </div>
+                {(!categories || categories.length === 0) && (
+                  <p className="text-gray-500 text-center py-8">No categories created yet.</p>
+                )}
               </div>
             )}
 
@@ -465,16 +450,6 @@ const TechWriterDashboard = () => {
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-medium mb-4">Performance Overview</h3>
                     <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Total Views</span>
-                        <span className="font-medium">{totalViews.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Average Views per Content</span>
-                        <span className="font-medium">
-                          {myContent.length > 0 ? Math.round(totalViews / myContent.length) : 0}
-                        </span>
-                      </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Total Likes</span>
                         <span className="font-medium">

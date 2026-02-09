@@ -224,7 +224,6 @@ def get_user_recommendations(
         ~Content.id.in_(liked_content_ids)  # Exclude already liked content
     ).order_by(
         Content.likes_count.desc(),
-        Content.views_count.desc(),
         Content.created_at.desc()
     ).limit(20).all()
     
@@ -235,8 +234,7 @@ def get_user_recommendations(
             Content.is_flagged == False,
             ~Content.id.in_(liked_content_ids)
         ).order_by(
-            Content.likes_count.desc(),
-            Content.views_count.desc()
+            Content.likes_count.desc()
         ).limit(20).all()
     
     # Format response
@@ -251,8 +249,7 @@ def get_user_recommendations(
             "thumbnail_url": content.thumbnail_url,
             "likes_count": content.likes_count,
             "dislikes_count": content.dislikes_count,
-            "views_count": content.views_count,
-            "comments_count": len(content.comments) if content.comments else 0,
+                        "comments_count": len(content.comments) if content.comments else 0,
             "created_at": content.created_at.isoformat(),
             "category": {
                 "id": content.category.id,

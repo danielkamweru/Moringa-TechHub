@@ -3,7 +3,8 @@ import { useSelector, useDispatch } from 'react-redux'
 import { User, Mail, Edit2, Save, X, Camera, Bell, BookOpen, Heart, Upload } from 'lucide-react'
 import { updateUserProfile, updateUser } from '../features/auth/authSlice'
 import { fetchUserContent } from '../features/content/contentSlice'
-import { fetchUserWishlist } from '../features/wishlist/wishlistSlice'
+import { fetchWishlist } from '../features/wishlist/wishlistSlice'
+import ContentCard from '../components/ContentCard'
 import api from '../services/api'
 
 const Profile = () => {
@@ -41,7 +42,7 @@ const Profile = () => {
       dispatch(fetchUserContent(user.id))
       const token = localStorage.getItem('token')
       if (token) {
-        dispatch(fetchUserWishlist())
+        dispatch(fetchWishlist())
       }
     }
   }, [user]) 
@@ -109,10 +110,10 @@ const Profile = () => {
         setTimeout(() => {
           console.log('5 seconds later - checking if avatar still exists:', formData.avatar_url)
           if (!formData.avatar_url) {
-            console.log('❌ AVATAR DISAPPEARED AFTER 5 SECONDS!')
+            console.log(' AVATAR DISAPPEARED AFTER 5 SECONDS!')
             console.log('Possible causes: Redux state override, useEffect race, or component unmount')
           } else {
-            console.log('✅ Avatar still exists after 5 seconds')
+            console.log(' Avatar still exists after 5 seconds')
           }
         }, 5000)
         
@@ -178,7 +179,7 @@ const Profile = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-start justify-between">
@@ -361,8 +362,7 @@ const Profile = () => {
                           {content.content_type}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {content.views_count || 0} views
-                        </span>
+                                                  </span>
                       </div>
                     </div>
                   ))
@@ -376,24 +376,35 @@ const Profile = () => {
           {activeTab === 'wishlist' && (
             <div>
               <h3 className="text-lg font-semibold mb-3">My Wishlist</h3>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {wishlist?.length > 0 ? (
-                  wishlist.map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4">
-                      <h4 className="font-medium">{item.title}</h4>
-                      <p className="text-gray-600 text-sm mt-1">{item.content_text?.substring(0, 100)}...</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded capitalize">
-                          {item.content_type}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {item.views_count || 0} views
-                        </span>
-                      </div>
-                    </div>
-                  ))
+                  wishlist.map((item) => {
+                    // Debug: Log each wishlist item structure
+                    console.log('Wishlist item:', item)
+                    console.log('Item keys:', Object.keys(item))
+                    return (
+                      <ContentCard 
+                        key={item.id} 
+                        content={{
+                          ...item,
+                          // Ensure all required fields exist with fallbacks
+                          content_type: item.content_type || 'article',
+                          thumbnail_url: item.thumbnail_url || null,
+                          media_url: item.media_url || null,
+                          category: item.category || { name: 'Uncategorized' },
+                          author: item.author || { username: 'Unknown' },
+                          created_at: item.created_at || new Date().toISOString(),
+                          likes_count: item.likes_count || 0,
+                                                    comments_count: item.comments_count || 0
+                        }}
+                        showActions={true}
+                      />
+                    )
+                  })
                 ) : (
-                  <p className="text-gray-500">No items in wishlist yet.</p>
+                  <div className="col-span-full text-center py-12">
+                    <p className="text-gray-500">No items in wishlist yet.</p>
+                  </div>
                 )}
               </div>
             </div>

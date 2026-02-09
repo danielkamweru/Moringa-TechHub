@@ -109,7 +109,6 @@ def seed_database():
                     status=ContentStatusEnum.DRAFT,  # All content as unpublished for admin approvals
                     likes_count=0,  # Required integer field
                     dislikes_count=0,  # Required integer field
-                    views_count=0,  # Required integer field
                     is_flagged=False  # Required boolean field
                 )
                 db.add(new_content)

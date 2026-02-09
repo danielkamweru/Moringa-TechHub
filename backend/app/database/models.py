@@ -19,6 +19,13 @@ user_wishlist = Table(
     Column('content_id', Integer, ForeignKey('content.id'), primary_key=True)
 )
 
+user_follows = Table(
+    'user_follows',
+    Base.metadata,
+    Column('follower_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('following_id', Integer, ForeignKey('users.id'), primary_key=True)
+)
+
 class RoleEnum(enum.Enum):
     ADMIN = "admin"
     TECH_WRITER = "tech_writer"
@@ -51,6 +58,7 @@ class NotificationTypeEnum(enum.Enum):
     FOLLOW = "follow"
     SYSTEM = "system"
     FLAG = "flag"
+    NEW_CONTENT = "new_content"
 
 class User(Base):
     __tablename__ = "users"
@@ -73,6 +81,7 @@ class User(Base):
     notifications = relationship("Notification", back_populates="user")
     subscribed_categories = relationship("Category", secondary=user_categories, back_populates="subscribers")
     wishlist = relationship("Content", secondary=user_wishlist, back_populates="wishlisted_by")
+    # Following relationships will be defined after User class is complete
 
 class Profile(Base):
     __tablename__ = "profiles"
@@ -119,7 +128,6 @@ class Content(Base):
     category_id = Column(Integer, ForeignKey("categories.id"))
     likes_count = Column(Integer, default=0)
     dislikes_count = Column(Integer, default=0)
-    views_count = Column(Integer, default=0)
     is_flagged = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -198,6 +206,11 @@ class Notification(Base):
     @property
     def notification_type_str(self):
         return self.notification_type.value if self.notification_type else None
+
+# Add following relationships after all models are defined
+User.following = relationship("User", secondary=user_follows, 
+                           primaryjoin=(User.id == user_follows.c.follower_id),
+                           secondaryjoin=(User.id == user_follows.c.following_id))
 
 class ContentFlag(Base):
     __tablename__ = "content_flags"

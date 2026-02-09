@@ -9,6 +9,7 @@ import { fetchContentById, likeContent } from '../features/content/contentSlice'
 import { addToWishlist, removeFromWishlist } from '../features/wishlist/wishlistSlice'
 import { subscribeToCategory, unsubscribeFromCategory, fetchUserSubscriptions } from '../features/categories/categoriesSlice'
 import CommentThread from '../components/CommentThread'
+import api from '../services/api'
 
 // Custom Audio Player Component with Smart Embedding
 const CustomAudioPlayer = ({ src, title, thumbnail }) => {
@@ -696,7 +697,7 @@ const ContentDetail = () => {
 
   if (loading || !currentContent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading content...</p>
@@ -706,7 +707,7 @@ const ContentDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Back Button */}
         <button 
@@ -754,11 +755,7 @@ const ContentDetail = () => {
             {/* Stats and Actions */}
             <div className="flex items-center justify-between pt-4 border-t border-gray-200">
               <div className="flex items-center gap-6 text-sm text-gray-600">
-                <span className="flex items-center gap-1">
-                  <Eye size={16} />
-                  {currentContent.views_count || 0} views
-                </span>
-                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1">
                   <Heart size={16} />
                   {currentContent.likes_count || 0} likes
                 </span>

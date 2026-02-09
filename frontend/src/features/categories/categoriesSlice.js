@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api from '../../services/api'
+import toast from 'react-hot-toast'
 
 export const fetchCategories = createAsyncThunk('categories/fetchCategories', async () => {
   const response = await api.get('/categories')
@@ -30,11 +31,13 @@ export const deleteCategory = createAsyncThunk(
 
 export const subscribeToCategory = createAsyncThunk('categories/subscribeToCategory', async (categoryId) => {
   const response = await api.post(`/categories/${categoryId}/subscribe`)
+  toast.success('Successfully subscribed to category!')
   return response.data
 })
 
 export const unsubscribeFromCategory = createAsyncThunk('categories/unsubscribeFromCategory', async (categoryId) => {
   await api.delete(`/categories/${categoryId}/subscribe`)
+  toast.success('Unsubscribed from category')
   return categoryId
 })
 
