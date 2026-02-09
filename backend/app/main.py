@@ -24,8 +24,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:8000",
         "http://localhost:3000",
-        "https://moringa-techhub.onrender.com",  # Add production URL for direct API access
-        "*"  # Allow all origins during development
+        "https://moringa-techhub.onrender.com"  # Add production URL for direct API access
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
