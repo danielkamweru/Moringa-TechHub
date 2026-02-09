@@ -582,23 +582,65 @@ def delete_content(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    content = db.query(Content).filter(Content.id == content_id).first()
-    if not content:
+    try:
+        print(f"Attempting to delete content {content_id} by user {current_user.id} (role: {current_user.role})")
+        
+        content = db.query(Content).filter(Content.id == content_id).first()
+        if not content:
+            print(f"Content {content_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Content not found"
+            )
+        
+        print(f"Found content: {content.title}, author_id: {content.author_id}")
+        
+        # Only author or admin can delete
+        if content.author_id != current_user.id and current_user.role != RoleEnum.ADMIN:
+            print(f"Permission denied: user {current_user.id} is not author ( {content.author_id}) or admin")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to delete this content"
+            )
+        
+        # Delete related records first (likes, comments, notifications, wishlist items)
+        try:
+            # Delete likes
+            db.query(Like).filter(Like.content_id == content_id).delete()
+            
+            # Delete comments
+            db.query(ContentComment).filter(ContentComment.content_id == content_id).delete()
+            
+            # Delete notifications related to this content
+            db.query(Notification).filter(Notification.related_content_id == content_id).delete()
+            
+            # Delete from wishlist using association table
+            from app.database.models import user_wishlist
+            stmt = user_wishlist.delete().where(user_wishlist.c.content_id == content_id)
+            db.execute(stmt)
+            
+            print("Related records deleted successfully")
+        except Exception as e:
+            print(f"Error deleting related records: {e}")
+            # Continue with content deletion even if related records fail
+        
+        # Delete the content
+        db.delete(content)
+        db.commit()
+        
+        print(f"Content {content_id} deleted successfully")
+        return {"message": "Content deleted successfully"}
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        print(f"Unexpected error deleting content {content_id}: {e}")
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
         )
-    
-    # Only author or admin can delete
-    if content.author_id != current_user.id and current_user.role != RoleEnum.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this content"
-        )
-    
-    db.delete(content)
-    db.commit()
-    return {"message": "Content deleted successfully"}
 
 @router.put("/{content_id}/approve")
 def approve_content(
