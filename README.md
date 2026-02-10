@@ -410,7 +410,7 @@ vercel --prod
 
 # Or deploy to Netlify
 npm run build
-# Upload dist/ folder to Netlify
+# Upload dist/ folder to Ne
 ```
 
 ## Testing
