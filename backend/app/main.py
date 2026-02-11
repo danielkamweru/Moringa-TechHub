@@ -59,31 +59,23 @@ except Exception as e:
     logger.info("The API will start but database operations will fail until database is properly configured")
 
 # Include routers
-print("=== Including routers ===")
 try:
     app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-    print("✅ Auth router included")
 except Exception as e:
     print(f"❌ Auth router error: {e}")
 
 try:
     app.include_router(users.router, prefix="/api/users", tags=["Users"])
-    print("✅ Users router included")
 except Exception as e:
     print(f"❌ Users router error: {e}")
 
 try:
     app.include_router(content.router, prefix="/api/content", tags=["Content"])
-    print("✅ Content router included")
 except Exception as e:
     print(f"❌ Content router error: {e}")
 
 try:
     app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
-    print("✅ Categories router included")
-    print(f"Categories router routes: {len(categories.router.routes)}")
-    for route in categories.router.routes:
-        print(f"  {route.path}: {getattr(route, 'methods', 'N/A')}")
 except Exception as e:
     print(f"❌ Categories router error: {e}")
     import traceback
@@ -91,29 +83,23 @@ except Exception as e:
 
 try:
     app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
-    print("✅ Comments router included")
 except Exception as e:
     print(f"❌ Comments router error: {e}")
 
 try:
     app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
-    print("✅ Notifications router included")
 except Exception as e:
     print(f"❌ Notifications router error: {e}")
 
 try:
     app.include_router(wishlist.router, prefix="/api/wishlist", tags=["Wishlist"])
-    print("✅ Wishlist router included")
 except Exception as e:
     print(f"❌ Wishlist router error: {e}")
 
 try:
     app.include_router(admin_enhanced.router, prefix="/api/admin", tags=["Admin"])
-    print("✅ Admin router included")
 except Exception as e:
     print(f"❌ Admin router error: {e}")
-
-print("=== Router inclusion complete ===")
 
 # Serve static files (uploaded images)
 # Use persistent storage on Render, local storage for development

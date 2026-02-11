@@ -188,6 +188,34 @@ def get_pending_content(
         Content.status == ContentStatusEnum.REVIEW
     ).offset(skip).limit(limit).all()
 
+@router.put("/content/{content_id}/reject")
+def reject_content(
+    content_id: int,
+    reason: Optional[str] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Reject content with feedback"""
+    content = db.query(Content).filter(Content.id == content_id).first()
+    if not content:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    content.status = ContentStatusEnum.REJECTED
+    db.commit()
+    
+    # Notify author
+    notification = Notification(
+        user_id=content.author_id,
+        notification_type=NotificationTypeEnum.STATUS_CHANGE,
+        title="Content Rejected",
+        message=f"Your content '{content.title}' was rejected. Reason: {reason or 'Does not meet guidelines'}",
+        related_content_id=content.id
+    )
+    db.add(notification)
+    db.commit()
+    
+    return {"message": "Content rejected"}
+
 @router.put("/content/{content_id}/approve")
 def approve_content(
     content_id: int,
@@ -344,7 +372,7 @@ def flag_content(
     if existing_flag:
         raise HTTPException(status_code=400, detail="Content already flagged by this user")
     
-    # Create flag
+    # Create flag and notify author
     flag = ContentFlag(
         content_id=content_id,
         flagged_by=current_user.id,
@@ -353,6 +381,17 @@ def flag_content(
     )
     
     db.add(flag)
+    db.commit()
+    
+    # Notify content author about flag
+    notification = Notification(
+        user_id=content.author_id,
+        notification_type=NotificationTypeEnum.STATUS_CHANGE,
+        title="Content Flagged",
+        message=f"Your content '{content.title}' has been flagged for review. Reason: {reason}",
+        related_content_id=content_id
+    )
+    db.add(notification)
     db.commit()
     
     return {"message": "Content flagged successfully"}

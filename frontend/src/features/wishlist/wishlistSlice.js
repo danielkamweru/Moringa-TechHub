@@ -7,15 +7,12 @@ export const fetchWishlist = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get('/wishlist/auth')
-      console.log('Wishlist response:', response.data)
       return response.data || []
     } catch (error) {
       // Silently handle 422 and other errors to prevent UI issues
       if (error.response?.status === 422) {
-        console.log('Wishlist endpoint returned 422 - possibly empty wishlist')
         return []
       }
-      console.warn('Wishlist fetch failed:', error.response?.data?.message || error.message)
       return []
     }
   }
@@ -25,20 +22,13 @@ export const addToWishlist = createAsyncThunk(
   'wishlist/addToWishlist',
   async (contentId, { rejectWithValue, dispatch }) => {
     try {
-      console.log('=== FRONTEND ADD TO WISHLIST DEBUG ===')
-      console.log('Content ID:', contentId)
-      console.log('API endpoint:', `/wishlist/auth/${contentId}`)
-      
       const response = await api.post(`/wishlist/auth/${contentId}`)
-      console.log('API response:', response.data)
       
       // Refetch wishlist to get updated list
       dispatch(fetchWishlist())
       toast.success('Added to wishlist!')
       return response.data
     } catch (error) {
-      console.error('ADD TO WISHLIST ERROR:', error)
-      console.error('Error response:', error.response?.data)
       const errorMessage = error.response?.data?.detail || 'Failed to add to wishlist'
       // Handle "already exists" case gracefully
       if (error.response?.data?.already_exists) {

@@ -16,12 +16,10 @@ export const fetchContent = createAsyncThunk(
     if (token) {
       // Authenticated user - use full content endpoint (admins see all, users see published)
       const response = await api.get(`/content/?${params}`)
-      console.log('Raw API response (auth):', response.data)
       return response.data
     } else {
       // Unauthenticated user - use public endpoint (only published content)
       const response = await api.get(`/content/public?${params}`)
-      console.log('Raw API response (public):', response.data)
       return response.data
     }
   }

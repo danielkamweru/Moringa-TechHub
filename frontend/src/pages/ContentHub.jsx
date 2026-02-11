@@ -168,15 +168,6 @@ const ContentHub = () => {
     const matchesType = selectedType === 'all' || 
       item.content_type === selectedType
     
-    console.log('Filtering:', {
-      item: item.title,
-      category: item.category?.name,
-      selectedCategory,
-      matchesCategory,
-      selectedType,
-      matchesType
-    })
-    
     return matchesSearch && matchesCategory && matchesType
   })
 

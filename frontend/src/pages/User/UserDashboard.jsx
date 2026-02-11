@@ -4,9 +4,11 @@ import { Search, Filter, Grid, List, Heart, Bookmark, Eye, Play, Headphones, Boo
 import { fetchContent, likeContent, saveToWishlist, createContent, updateContent, deleteContent } from '../../features/content/contentSlice'
 import { fetchCategories, subscribeToCategory, unsubscribeFromCategory } from '../../features/categories/categoriesSlice'
 import { fetchRecommendations } from '../../features/users/usersSlice'
+import { fetchNotifications } from '../../features/notifications/notificationsSlice'
 import ContentCard from '../../components/ContentCard'
 import UserSubscriptions from '../../components/UserSubscriptions'
 import AdminActions from '../../components/AdminActions'
+import NotificationCenter from '../../components/NotificationCenter'
 
 const UserDashboard = () => {
   const dispatch = useDispatch()
@@ -49,6 +51,13 @@ const UserDashboard = () => {
     // Calculate user stats
     const stats = calculateUserStats()
     setUserStats(stats)
+    
+    // Fetch notifications periodically
+    const interval = setInterval(() => {
+      dispatch(fetchNotifications())
+    }, 30000) // Check every 30 seconds
+    
+    return () => clearInterval(interval)
   }, [dispatch, user])
 
   const calculateUserStats = () => {
@@ -203,8 +212,8 @@ const UserDashboard = () => {
 
   const filteredContent = getFilteredContent()
   const myContent = content?.filter(c => c.author_id === user?.id) || []
-  const pendingContent = myContent.filter(c => c.status === 'review') || []
-  const publishedContent = myContent.filter(c => c.status === 'published') || []
+  const pendingContent = myContent.filter(c => c.status === 'review' || !c.status || c.status === 'draft')
+  const publishedContent = myContent.filter(c => c.status === 'published')
 
   const tabs = [
     { id: 'my-content', label: 'My Content', icon: FileText },
@@ -225,13 +234,16 @@ const UserDashboard = () => {
             </h1>
             <p className="text-gray-600 mt-2">Manage your content and track your progress</p>
           </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            <Plus size={18} />
-            Create Content
-          </button>
+          <div className="flex gap-3">
+            <NotificationCenter />
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              <Plus size={18} />
+              Create Content
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -323,7 +335,7 @@ const UserDashboard = () => {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => setEditingContent(item)}
+                            onClick={() => handleEditContent(item)}
                             className="text-blue-600 hover:text-blue-800"
                           >
                             <Edit size={16} />
@@ -372,7 +384,7 @@ const UserDashboard = () => {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => setEditingContent(item)}
+                            onClick={() => handleEditContent(item)}
                             className="text-blue-600 hover:text-blue-800"
                           >
                             <Edit size={16} />
@@ -421,7 +433,7 @@ const UserDashboard = () => {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => setEditingContent(item)}
+                            onClick={() => handleEditContent(item)}
                             className="text-blue-600 hover:text-blue-800"
                           >
                             <Edit size={16} />
@@ -456,7 +468,7 @@ const UserDashboard = () => {
               <button
                 onClick={() => {
                   setShowCreateForm(false)
-                  resetContentForm()
+                  resetForm()
                 }}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -581,7 +593,7 @@ const UserDashboard = () => {
                   type="button"
                   onClick={() => {
                     setShowCreateForm(false)
-                    resetContentForm()
+                    resetForm()
                   }}
                   className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
                 >
