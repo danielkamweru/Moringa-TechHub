@@ -1,22 +1,51 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { MessageCircle, ThumbsUp, Reply } from 'lucide-react'
-import { fetchComments, addComment, likeComment, reportComment } from '../features/comments/commentsSlice'
+import { fetchComments, addComment, likeComment, reportComment, clearComments } from '../features/comments/commentsSlice'
 
 const CommentThread = ({ contentId, comments: commentsProp }) => {
   const dispatch = useDispatch()
-  const { user } = useSelector((state) => state.auth)
+  const { user, isAuthenticated } = useSelector((state) => state.auth)
   const { items: commentsFromStore, loading } = useSelector((state) => state.comments)
   const comments = commentsProp ?? commentsFromStore ?? []
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [replyTexts, setReplyTexts] = useState({}) // Store reply text for each comment
+  const replyTextareaRefs = useRef({}) // Refs for reply textareas
 
   useEffect(() => {
     if (contentId) {
       dispatch(fetchComments(contentId))
     }
   }, [contentId, dispatch])
+
+  // Clear comments when user logs out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      dispatch(clearComments())
+      setNewComment('')
+      setReplyTexts({})
+      setReplyTo(null)
+    }
+  }, [isAuthenticated, dispatch])
+
+  // Refetch comments when user logs back in
+  useEffect(() => {
+    if (isAuthenticated && contentId) {
+      dispatch(fetchComments(contentId))
+    }
+  }, [isAuthenticated, dispatch, contentId])
+
+  // Force cursor to end of reply textareas when text changes
+  useEffect(() => {
+    Object.keys(replyTexts).forEach(commentId => {
+      const textarea = replyTextareaRefs.current[commentId];
+      if (textarea && replyTexts[commentId]) {
+        const textLength = replyTexts[commentId].length;
+        textarea.setSelectionRange(textLength, textLength);
+      }
+    });
+  }, [replyTexts])
 
   const handleSubmitComment = async (e) => {
     e.preventDefault()
@@ -29,7 +58,6 @@ const CommentThread = ({ contentId, comments: commentsProp }) => {
         parentId: null
       })).unwrap()
       setNewComment('')
-      dispatch(fetchComments(contentId))
     } catch (error) {
       console.error('Failed to add comment:', error)
     }
@@ -50,7 +78,6 @@ const CommentThread = ({ contentId, comments: commentsProp }) => {
       // Clear reply text for this specific comment
       setReplyTexts(prev => ({ ...prev, [parentId]: '' }))
       setReplyTo(null)
-      dispatch(fetchComments(contentId))
     } catch (error) {
       console.error('Failed to add comment:', error)
     }
@@ -110,14 +137,73 @@ const CommentThread = ({ contentId, comments: commentsProp }) => {
         {replyTo === comment.id && (
           <form onSubmit={(e) => handleSubmitReply(e, comment.id)} className="mt-3">
             <textarea
+              ref={el => replyTextareaRefs.current[comment.id] = el}
               value={replyTexts[comment.id] || ''}
+              onKeyDown={(e) => {
+                const currentValue = replyTexts[comment.id] || '';
+                const cursorPos = e.target.selectionStart;
+                
+                // Handle character keys (force LTR input)
+                if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                  e.preventDefault();
+                  const newValue = currentValue + e.key;
+                  setReplyTexts(prev => ({ ...prev, [comment.id]: newValue }));
+                  
+                  // Force cursor to end of the new text
+                  setTimeout(() => {
+                    e.target.setSelectionRange(newValue.length, newValue.length);
+                  }, 0);
+                }
+                // Handle backspace
+                else if (e.key === 'Backspace') {
+                  e.preventDefault();
+                  if (cursorPos > 0) {
+                    const newValue = currentValue.slice(0, cursorPos - 1) + currentValue.slice(cursorPos);
+                    setReplyTexts(prev => ({ ...prev, [comment.id]: newValue }));
+                    
+                    setTimeout(() => {
+                      e.target.setSelectionRange(cursorPos - 1, cursorPos - 1);
+                    }, 0);
+                  }
+                }
+                // Handle delete
+                else if (e.key === 'Delete') {
+                  e.preventDefault();
+                  if (cursorPos < currentValue.length) {
+                    const newValue = currentValue.slice(0, cursorPos) + currentValue.slice(cursorPos + 1);
+                    setReplyTexts(prev => ({ ...prev, [comment.id]: newValue }));
+                    
+                    setTimeout(() => {
+                      e.target.setSelectionRange(cursorPos, cursorPos);
+                    }, 0);
+                  }
+                }
+                // Allow arrow keys, enter, tab, etc.
+                else if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Enter', 'Tab'].includes(e.key)) {
+                  // Let these keys work normally
+                }
+                // Allow Ctrl/Cmd combinations (copy, paste, etc.)
+                else if (e.ctrlKey || e.metaKey) {
+                  // Let these work normally
+                }
+                else {
+                  e.preventDefault();
+                }
+              }}
+              onInput={(e) => {
+                // Prevent default input behavior
+                e.preventDefault();
+              }}
               onChange={(e) => {
-                setReplyTexts(prev => ({ ...prev, [comment.id]: e.target.value }))
+                // Controlled input - no logging needed
               }}
               placeholder="Write a reply..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent textarea-ltr"
+              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              style={{ 
+                direction: 'ltr',
+                textAlign: 'left'
+              }}
               rows="4"
-              style={{ minHeight: '100px' }}
               autoFocus
             />
             <div className="flex gap-2 mt-2">
@@ -156,9 +242,21 @@ const CommentThread = ({ contentId, comments: commentsProp }) => {
         <form onSubmit={handleSubmitComment} className="mb-6">
           <textarea
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={(e) => {
+                const value = e.target.value;
+                setNewComment(value)
+                
+                // Force cursor to end to prevent RTL input behavior
+                setTimeout(() => {
+                  e.target.setSelectionRange(value.length, value.length);
+                }, 0);
+              }}
             placeholder="Share your thoughts..."
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            style={{ 
+                direction: 'ltr',
+                textAlign: 'left'
+              }}
             rows="3"
           />
           <button type="submit" className="btn-primary mt-2">

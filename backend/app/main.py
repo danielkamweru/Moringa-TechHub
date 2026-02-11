@@ -62,44 +62,45 @@ except Exception as e:
 try:
     app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 except Exception as e:
-    print(f"❌ Auth router error: {e}")
+    print(f" Auth router error: {e}")
 
 try:
     app.include_router(users.router, prefix="/api/users", tags=["Users"])
 except Exception as e:
-    print(f"❌ Users router error: {e}")
-
-try:
-    app.include_router(content.router, prefix="/api/content", tags=["Content"])
-except Exception as e:
-    print(f"❌ Content router error: {e}")
-
-try:
-    app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
-except Exception as e:
-    print(f"❌ Categories router error: {e}")
-    import traceback
-    traceback.print_exc()
+    print(f"Users router error: {e}")
 
 try:
     app.include_router(comments.router, prefix="/api/comments", tags=["Comments"])
 except Exception as e:
-    print(f"❌ Comments router error: {e}")
+    print(f" Comments router error: {e}")
+
+try:
+    app.include_router(content.router, prefix="/api/content", tags=["Content"])
+except Exception as e:
+    print(f"Content router error: {e}")
+
+try:
+    app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
+except Exception as e:
+    print(f" Categories router error: {e}")
+    import traceback
+    traceback.print_exc()
+
 
 try:
     app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
 except Exception as e:
-    print(f"❌ Notifications router error: {e}")
+    print(f" Notifications router error: {e}")
 
 try:
     app.include_router(wishlist.router, prefix="/api/wishlist", tags=["Wishlist"])
 except Exception as e:
-    print(f"❌ Wishlist router error: {e}")
+    print(f"Wishlist router error: {e}")
 
 try:
     app.include_router(admin_enhanced.router, prefix="/api/admin", tags=["Admin"])
 except Exception as e:
-    print(f"❌ Admin router error: {e}")
+    print(f" Admin router error: {e}")
 
 # Serve static files (uploaded images)
 # Use persistent storage on Render, local storage for development
@@ -158,7 +159,7 @@ if __name__ == "__main__":
     import uvicorn
     print("Starting Moringa TechHub Backend...")
     print(" Available on: http://localhost:8000")
-    print(" Frontend should connect to: http://localhost:5174")
+    print(" Frontend should connect to: http://localhost:5173")
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",

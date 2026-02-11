@@ -5,7 +5,7 @@ export const fetchComments = createAsyncThunk(
   'comments/fetchComments',
   async (contentId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/comments/content/${contentId}/`)
+      const response = await api.get(`/comments/content/${contentId}/comments`)
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch comments')
@@ -108,7 +108,8 @@ const commentsSlice = createSlice({
         state.error = action.payload
       })
       .addCase(addComment.fulfilled, (state, action) => {
-        state.items.push(action.payload)
+        // The backend now returns the full comment tree
+        state.items = action.payload || []
       })
       .addCase(updateComment.fulfilled, (state, action) => {
         const index = state.items.findIndex(item => item.id === action.payload.id)

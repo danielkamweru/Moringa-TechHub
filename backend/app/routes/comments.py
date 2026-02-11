@@ -40,7 +40,7 @@ def build_comment_tree(comments: List[Comment], db: Session, current_user: User 
         }
         comment_dict[comment.id] = comment_data
     
-    # Second pass: build tree structure
+    # Second pass: build tree structure with sorted replies
     for comment in comments:
         if comment.parent_id is None:
             root_comments.append(comment_dict[comment.id])
@@ -48,26 +48,36 @@ def build_comment_tree(comments: List[Comment], db: Session, current_user: User 
             if comment.parent_id in comment_dict:
                 comment_dict[comment.parent_id]["replies"].append(comment_dict[comment.id])
     
+    # Sort replies for each comment in chronological order
+    def sort_replies_recursive(comments_list):
+        for comment in comments_list:
+            if comment["replies"]:
+                # Sort replies by created_at in ascending order (oldest first)
+                comment["replies"].sort(key=lambda x: x["created_at"])
+                # Recursively sort nested replies
+                sort_replies_recursive(comment["replies"])
+    
+    # Sort root comments by created_at in ascending order (oldest first)
+    root_comments.sort(key=lambda x: x["created_at"])
+    
+    sort_replies_recursive(root_comments)
     return root_comments
 
-@router.get("/content/{content_id}")
-def get_content_comments(
-    content_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
+@router.get("/content/{content_id}/comments")
+def get_content_comments(content_id: int, db: Session = Depends(get_db)):
+    """Get comments for content - public endpoint, no authentication required"""
     from sqlalchemy.orm import joinedload
     content = db.query(Content).filter(Content.id == content_id).first()
     if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Content not found"
-        )
+        raise HTTPException(status_code=404, detail="Content not found")
     
-    comments = db.query(Comment).options(joinedload(Comment.author)).filter(Comment.content_id == content_id).all()
-    return build_comment_tree(comments, db, current_user)
+    comments = db.query(Comment).options(joinedload(Comment.author)).filter(
+        Comment.content_id == content_id
+    ).order_by(Comment.created_at.asc()).all()
+    
+    return build_comment_tree(comments, db, None)
 
-@router.post("/", response_model=CommentResponse)
+@router.post("/")
 def create_comment(
     comment: CommentCreate,
     current_user: User = Depends(get_current_user),
@@ -134,11 +144,13 @@ def create_comment(
     
     db.commit()
     
-    # Reload with relationships
+    # Reload with relationships and return full comment tree
     from sqlalchemy.orm import joinedload
-    db_comment = db.query(Comment).options(joinedload(Comment.author)).filter(Comment.id == db_comment.id).first()
+    all_comments = db.query(Comment).options(joinedload(Comment.author)).filter(
+        Comment.content_id == comment.content_id
+    ).order_by(Comment.created_at.asc()).all()
     
-    return db_comment
+    return build_comment_tree(all_comments, db, current_user)
 
 @router.get("/{comment_id}", response_model=CommentResponse)
 def get_comment(
