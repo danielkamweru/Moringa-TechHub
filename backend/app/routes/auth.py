@@ -73,7 +73,8 @@ def register(request_data: dict = Body(...), db: Session = Depends(get_db)):
                         "email": existing_user_by_email.email,
                         "full_name": existing_user_by_email.full_name,
                         "role": existing_user_by_email.role.value,
-                        "is_active": existing_user_by_email.is_active
+                        "is_active": existing_user_by_email.is_active,
+                        "created_at": existing_user_by_email.created_at
                     }
                 }
             else:
@@ -129,7 +130,8 @@ def register(request_data: dict = Body(...), db: Session = Depends(get_db)):
                 "email": db_user.email,
                 "full_name": db_user.full_name,
                 "role": db_user.role.value,
-                "is_active": db_user.is_active
+                "is_active": db_user.is_active,
+                "created_at": db_user.created_at
             }
         }
     except HTTPException:
@@ -209,7 +211,8 @@ def login(request_data: dict = Body(...), db: Session = Depends(get_db)):
                 "email": user.email,
                 "full_name": user.full_name,
                 "role": user.role.value,
-                "is_active": user.is_active
+                "is_active": user.is_active,
+                "created_at": user.created_at
             }
         }
     except HTTPException:

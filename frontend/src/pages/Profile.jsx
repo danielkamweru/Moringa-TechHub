@@ -33,12 +33,20 @@ const Profile = () => {
         full_name: user.full_name,
         bio: user.profile?.bio
       })
-      setFormData({
-        full_name: user.full_name || '',
-        bio: user.profile?.bio || '',
-        avatar_url: user.avatar_url || '', 
-        interests: user.interests || []
+      
+      // Only update formData if it's not already set or if user data has actually changed
+      setFormData(prev => {
+        // Preserve avatar_url if it exists in current state and user doesn't have one
+        const preserveAvatar = prev.avatar_url && !user.avatar_url;
+        
+        return {
+          full_name: user.full_name || prev.full_name || '',
+          bio: user.profile?.bio || prev.bio || '',
+          avatar_url: preserveAvatar ? prev.avatar_url : (user.avatar_url || prev.avatar_url || ''), 
+          interests: user.interests || prev.interests || []
+        }
       })
+      
       dispatch(fetchUserContent(user.id))
       const token = localStorage.getItem('token')
       if (token) {
@@ -149,6 +157,17 @@ const Profile = () => {
       const response = await api.put('/auth/profile', profileData)
       console.log('Profile update response:', response.data)
       
+      // Update the user state with the new profile data
+      const updatedUser = {
+        ...user,
+        full_name: formData.full_name,
+        profile: {
+          ...user.profile,
+          bio: formData.bio
+        }
+      }
+      
+      dispatch(updateUser(updatedUser))
       dispatch(updateUserProfile(response.data))
       
       setIsEditing(false)
@@ -163,12 +182,12 @@ const Profile = () => {
   const handleCancel = () => {
     setIsEditing(false)
     if (user) {
-      setFormData({
+      setFormData(prev => ({
         full_name: user.full_name || '',
         bio: user.profile?.bio || '',
-        avatar_url: user.avatar_url || '',
+        avatar_url: prev.avatar_url || user.avatar_url || '', // Preserve current avatar_url
         interests: user.interests || []
-      })
+      }))
     }
   }
 
@@ -279,7 +298,7 @@ const Profile = () => {
               />
             ) : (
               <p className="text-gray-700">
-                {user?.profile?.bio || 'No bio added yet. Click edit to add your bio.'}
+                {formData.bio || user?.profile?.bio || 'No bio added yet. Click edit to add your bio.'}
               </p>
             )}
           </div>
@@ -329,7 +348,16 @@ const Profile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Member Since</p>
-                    <p className="font-medium">{new Date(user?.created_at).toLocaleDateString()}</p>
+                    <p className="font-medium">
+                      {user?.created_at 
+                        ? new Date(user.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })
+                        : 'Unknown'
+                      }
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Account Status</p>
