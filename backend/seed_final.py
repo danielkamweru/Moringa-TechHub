@@ -96,7 +96,7 @@ def seed_database():
             # Check if content already exists
             existing_content = db.query(Content).filter(
                 Content.title == content_item["title"],
-                Content.category == category_objects[content_item["category"]]
+                Content.category_id == category_objects[content_item["category"]].id
             ).first()
             
             if not existing_content:
@@ -104,11 +104,11 @@ def seed_database():
                     title=content_item["title"],
                     subtitle=content_item.get("subtitle", ""),
                     content_text=content_item["description"],
-                    category=category_objects[content_item["category"]],
+                    category_id=category_objects[content_item["category"]].id,
                     content_type=getattr(ContentTypeEnum, content_item["type"]),
                     media_url=content_item.get("url", ""),
                     thumbnail_url=content_item["thumbnail"],
-                    author=admin_user,
+                    author_id=admin_user.id,
                     status=ContentStatusEnum.DRAFT,  # All content as unpublished for admin approvals
                     likes_count=0,  # Required integer field
                     dislikes_count=0,  # Required integer field
