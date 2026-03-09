@@ -18,7 +18,13 @@ services:
         value: "/opt/render/project/src"
       - key: ENVIRONMENT
         value: "production"
+      - key: USE_POSTGRES
+        value: "true"
     healthCheckPath: /health
     healthCheckTimeout: 30
     autoDeploy: true
     plan: starter
+  - type: pserv
+    name: moringa-techhub-db
+    databaseName: moringa_techhub
+    user: moringa_user

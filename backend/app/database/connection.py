@@ -14,10 +14,18 @@ logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./moringa_techhub.db")
 
+# Check if we should use PostgreSQL
+USE_POSTGRES = os.getenv("USE_POSTGRES", "false").lower() == "true"
+
 # Validate DATABASE_URL before proceeding
 if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost:5432/moringa_techhub":
-    logger.warning("DATABASE_URL is not properly configured. Falling back to SQLite.")
-    DATABASE_URL = "sqlite:///./moringa_techhub.db"
+    if USE_POSTGRES:
+        logger.warning("DATABASE_URL is not properly configured but USE_POSTGRES is true. Using Render internal database.")
+        # Use Render's internal database URL format
+        DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./moringa_techhub.db")
+    else:
+        logger.warning("DATABASE_URL is not properly configured. Falling back to SQLite.")
+        DATABASE_URL = "sqlite:///./moringa_techhub.db"
 
 # Handle SQLite and PostgreSQL differently
 if DATABASE_URL.startswith("sqlite"):
@@ -31,20 +39,7 @@ else:
         DATABASE_URL += "?sslmode=require"
     
     try:
-        # Test if we can resolve the hostname first
-        import socket
-        host = DATABASE_URL.split('@')[1].split('/')[0] if '@' in DATABASE_URL else None
-        if host:
-            try:
-                socket.gethostbyname(host)
-                logger.info(f"DNS resolution successful for {host}")
-            except socket.gaierror:
-                logger.error(f"DNS resolution failed for {host} - falling back to SQLite")
-                DATABASE_URL = "sqlite:///./moringa_techhub.db"
-                engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-                raise Exception("DNS resolution failed")
-        
-        # For psycopg2, SSL should be in the URL, not in connect_args
+        # For Render PostgreSQL, don't need DNS check as it's internal
         engine = create_engine(
             DATABASE_URL,
             pool_size=20,
@@ -58,9 +53,12 @@ else:
         logger.info("PostgreSQL engine created successfully")
     except Exception as e:
         logger.error(f"Failed to create PostgreSQL engine: {e}")
-        logger.info("Falling back to SQLite database")
-        DATABASE_URL = "sqlite:///./moringa_techhub.db"
-        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+        if USE_POSTGRES:
+            logger.error("USE_POSTGRES is true but PostgreSQL failed. Application may not work properly.")
+        else:
+            logger.info("Falling back to SQLite database")
+            DATABASE_URL = "sqlite:///./moringa_techhub.db"
+            engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
