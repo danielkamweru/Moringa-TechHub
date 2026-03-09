@@ -31,6 +31,7 @@ else:
         DATABASE_URL += "?sslmode=require"
     
     try:
+        # For psycopg2, SSL should be in the URL, not in connect_args
         engine = create_engine(
             DATABASE_URL,
             pool_size=20,
@@ -38,8 +39,6 @@ else:
             pool_pre_ping=True,
             pool_recycle=3600,
             connect_args={
-                "sslmode": "require",
-                "ssl": {"sslmode": "require"},
                 "connect_timeout": 10,
             }
         )
