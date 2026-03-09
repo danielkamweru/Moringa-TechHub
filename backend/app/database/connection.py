@@ -12,37 +12,30 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./moringa_techhub.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Handle SQLite and PostgreSQL differently
-if DATABASE_URL.startswith("sqlite"):
-    logger.info("Using SQLite database")
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-else:
-    logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
-    
-    # Add SSL configuration for production PostgreSQL
-    if "render.com" in DATABASE_URL and "?sslmode=" not in DATABASE_URL:
-        DATABASE_URL += "?sslmode=require"
-    
-    try:
-        # For psycopg2, SSL should be in URL, not in connect_args
-        engine = create_engine(
-            DATABASE_URL,
-            pool_size=20,
-            max_overflow=30,
-            pool_pre_ping=True,
-            pool_recycle=3600,
-            connect_args={
-                "connect_timeout": 10,
-            }
-        )
-        logger.info("PostgreSQL engine created successfully")
-    except Exception as e:
-        logger.error(f"Failed to create PostgreSQL engine: {e}")
-        logger.info("Falling back to SQLite database")
-        DATABASE_URL = "sqlite:///./moringa_techhub.db"
-        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Validate DATABASE_URL is properly configured
+if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost:5432/moringa_techhub":
+    raise ValueError("DATABASE_URL must be properly configured in Render dashboard")
+
+# Add SSL configuration for production PostgreSQL
+if "render.com" in DATABASE_URL and "?sslmode=" not in DATABASE_URL:
+    DATABASE_URL += "?sslmode=require"
+
+logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
+
+# Create PostgreSQL engine
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=20,
+    max_overflow=30,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={
+        "connect_timeout": 10,
+    }
+)
+logger.info("PostgreSQL engine created successfully")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
