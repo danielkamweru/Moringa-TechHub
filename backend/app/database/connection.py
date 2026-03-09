@@ -14,11 +14,10 @@ logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Force override any external DATABASE_URL with Render internal format
-if DATABASE_URL and DATABASE_URL.startswith("postgresql://") and "dpg-" in DATABASE_URL:
-    logger.warning("External DATABASE_URL detected, forcing Render internal format")
-    # Use Render's internal database connection format
-    DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub?sslmode=require"
+# Force override - ignore any external DATABASE_URL and use internal connection
+logger.info(f"Original DATABASE_URL: {DATABASE_URL}")
+DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub?sslmode=require"
+logger.info(f"Overridden DATABASE_URL: {DATABASE_URL}")
 
 # Validate DATABASE_URL is properly configured
 if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost:5432/moringa_techhub":
