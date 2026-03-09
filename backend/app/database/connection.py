@@ -16,8 +16,26 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Force override - ignore any external DATABASE_URL and use internal connection
 logger.info(f"Original DATABASE_URL: {DATABASE_URL}")
-DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub?sslmode=require"
-logger.info(f"Overridden DATABASE_URL: {DATABASE_URL}")
+
+# Get the actual Render database connection from environment
+render_db_url = os.getenv("DATABASE_URL", "")
+if render_db_url and render_db_url.startswith("postgresql://") and "dpg-" in render_db_url:
+    # Extract the actual database name and credentials from Render
+    import re
+    match = re.match(r'postgresql://([^:]+):([^@]+)@([^/]+)/(.+)', render_db_url)
+    if match:
+        username, password, host, database = match.groups()
+        # Use Render's internal database connection
+        DATABASE_URL = f"postgresql://{username}:{password}@{host}/{database}?sslmode=require"
+        logger.info(f"Using Render database: {host}/{database}")
+    else:
+        DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub?sslmode=require"
+        logger.info("Using fallback localhost database")
+else:
+    DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub?sslmode=require"
+    logger.info("Using fallback localhost database")
+
+logger.info(f"Final DATABASE_URL: {DATABASE_URL}")
 
 # Validate DATABASE_URL is properly configured
 if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost:5432/moringa_techhub":
