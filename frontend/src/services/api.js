@@ -108,6 +108,10 @@ api.interceptors.response.use(
       error.message = 'Request timeout. The backend might be waking up. Please try again.'
     } else if (error.response?.status >= 500) {
       error.message = 'Server error. The backend is starting up. Please wait a moment and try again.'
+    } else if (error.message.includes('Network Error') || error.code === 'ERR_NETWORK') {
+      error.message = 'Network error. The backend may be starting up or the database is being configured. Please try again in a few moments.'
+    } else if (error.message.includes('DNS') || error.message.includes('ENOTFOUND')) {
+      error.message = 'Database connection error. The backend is configuring its database connection. Please try again in a minute.'
     }
     
     return Promise.reject(error)

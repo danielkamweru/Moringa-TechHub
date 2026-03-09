@@ -121,9 +121,9 @@ const Login = () => {
                     <p className="text-sm font-medium text-red-800">
                       {error}
                     </p>
-                    {(error.includes('waking up') || error.includes('starting up') || error.includes('timeout')) && (
+                    {(error.includes('waking up') || error.includes('starting up') || error.includes('timeout') || error.includes('Network error') || error.includes('Database connection')) && (
                       <p className="mt-1 text-xs text-red-600">
-                        The backend is starting up. This can take 30-60 seconds on first load. Please try again in a moment.
+                        The backend is starting up and configuring its database. This can take 1-2 minutes on first deploy. Please try again in a moment.
                       </p>
                     )}
                   </div>
@@ -140,8 +140,8 @@ const Login = () => {
                 {loading ? (
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    {error?.includes('waking up') || error?.includes('starting up') ? 
-                      'Waking up backend...' : 
+                    {error?.includes('waking up') || error?.includes('starting up') || error?.includes('Network error') || error?.includes('Database connection') ? 
+                      'Configuring backend...' : 
                       'Signing in...'}
                   </div>
                 ) : (
