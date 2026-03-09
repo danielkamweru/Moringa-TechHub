@@ -6,8 +6,9 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --worker-connections 1000
     envVars:
       - key: DATABASE_URL
-        sync: false
-        description: "Production PostgreSQL database URL. Must be set in Render dashboard."
+        fromDatabase:
+          name: moringa-techhub-db
+          property: connectionString
       - key: SEED_ON_START
         value: "true"
       - key: PERSISTENT_STORAGE
