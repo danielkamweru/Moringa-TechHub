@@ -152,7 +152,7 @@ async def options_handler(request: Request, path: str):
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Moringa TechHub API", "version": "1.1.3", "deployed": "2025-02-06-21:35", "status": "DATABASE_ENABLED_CATEGORIES"}
+    return {"message": "Welcome to Moringa TechHub API", "version": "1.1.4", "deployed": "2025-03-09-18:15", "status": "DATABASE_ENABLED_CATEGORIES"}
 
 @app.get("/health")
 async def health_check():
