@@ -17,14 +17,19 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./moringa_techhub.db")
 # Check if we should use PostgreSQL
 USE_POSTGRES = os.getenv("USE_POSTGRES", "false").lower() == "true"
 
-# Validate DATABASE_URL before proceeding
-if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost:5432/moringa_techhub":
-    if USE_POSTGRES:
-        logger.warning("DATABASE_URL is not properly configured but USE_POSTGRES is true. Using Render internal database.")
-        # Use Render's internal database URL format
-        DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./moringa_techhub.db")
+# Force SQLite if old external DATABASE_URL is detected
+if USE_POSTGRES and DATABASE_URL and "dpg-d6naf0shg0os73a2b9qg-a" in DATABASE_URL:
+    logger.warning("Old external DATABASE_URL detected, forcing SQLite fallback")
+    DATABASE_URL = "sqlite:///./moringa_techhub.db"
+    USE_POSTGRES = False  # Override to prevent PostgreSQL attempts
+
+# For Render production, use internal database
+if USE_POSTGRES and os.getenv("ENVIRONMENT") == "production" and not DATABASE_URL.startswith("sqlite"):
+    # This should be set by Render's fromDatabase configuration
+    if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+        logger.info("Using Render PostgreSQL database")
     else:
-        logger.warning("DATABASE_URL is not properly configured. Falling back to SQLite.")
+        logger.info("DATABASE_URL not properly configured for PostgreSQL, using SQLite")
         DATABASE_URL = "sqlite:///./moringa_techhub.db"
 
 # Handle SQLite and PostgreSQL differently
