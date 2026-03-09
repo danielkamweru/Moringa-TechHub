@@ -1,5 +1,5 @@
 from app.database.connection import get_db
-from app.database.models import User, Category, Content, ContentTypeEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum
+from app.database.models import User, Category, Content, ContentTypeEnum, RoleEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum
 import logging
 
 logger = logging.getLogger(__name__)
@@ -74,9 +74,12 @@ def seed_database():
                 username="admin",
                 full_name="Admin User",
                 hashed_password="simple_hash",
-                is_admin=True,
+                role=RoleEnum.ADMIN,
                 is_active=True
             )
+            db.add(admin_user)
+            db.commit()
+            db.refresh(admin_user)
         
         # Seed content
         # First, delete all existing content to start fresh
