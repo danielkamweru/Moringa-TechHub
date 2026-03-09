@@ -68,7 +68,8 @@ def test_connection():
     for attempt in range(max_retries):
         try:
             with engine.connect() as connection:
-                connection.execute("SELECT 1")
+                from sqlalchemy import text
+                connection.execute(text("SELECT 1"))
                 logger.info("Database connection successful")
                 return True
         except Exception as e:

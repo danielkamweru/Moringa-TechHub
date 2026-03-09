@@ -176,7 +176,8 @@ async def debug_routes():
 @app.get("/debug/env")
 async def debug_env():
     """Debug endpoint to check environment variables (without exposing sensitive data)"""
-    db_url = os.getenv("DATABASE_URL", "Not set")
+    from app.database.connection import DATABASE_URL as db_url
+    
     if db_url and "@" in db_url:
         # Hide credentials in the URL
         parts = db_url.split("@")
@@ -193,7 +194,8 @@ async def debug_env():
         "database_url_length": len(db_url) if db_url else 0,
         "environment": os.getenv("ENVIRONMENT", "development"),
         "seed_on_start": os.getenv("SEED_ON_START", "false"),
-        "persistent_storage": os.getenv("PERSISTENT_STORAGE", "Not set")
+        "persistent_storage": os.getenv("PERSISTENT_STORAGE", "Not set"),
+        "database_type": "SQLite" if db_url.startswith("sqlite") else "PostgreSQL"
     }
 
 if __name__ == "__main__":
