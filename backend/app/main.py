@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.database.connection import engine
+from app.database.connection import engine, test_connection
 from app.database.models import Base
-from app.routes import auth, users, content, comments, categories, notifications, wishlist, admin_enhanced
+from app.routes import auth, users, content, comments, categories, notifications, wishlist, admin_enhanced, keep_alive
 import logging
 import os
+import asyncio
 
 # Import seed function
 from seed_final import seed_database
@@ -41,22 +42,31 @@ app.add_middleware(
 )
 
 # Create database tables with error handling
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting up Moringa TechHub API...")
     
-    # Seed database if requested
-    if os.getenv("SEED_ON_START", "false").lower() == "true":
-        logger.info("Seeding database on startup...")
+    # Test database connection with retry
+    db_connected = test_connection()
+    
+    if db_connected:
         try:
-            seed_database()
-            logger.info("Database seeded successfully")
-        except Exception as e:
-            logger.error(f"Database seeding failed: {e}")
+            Base.metadata.create_all(bind=engine)
+            logger.info("Database tables created successfully")
             
-except Exception as e:
-    logger.error(f"Database connection failed: {e}")
-    logger.info("The API will start but database operations will fail until database is properly configured")
+            # Seed database if requested
+            if os.getenv("SEED_ON_START", "false").lower() == "true":
+                logger.info("Seeding database on startup...")
+                try:
+                    seed_database()
+                    logger.info("Database seeded successfully")
+                except Exception as e:
+                    logger.error(f"Database seeding failed: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Database setup failed: {e}")
+    else:
+        logger.warning("Database connection failed - API will start but database operations may fail")
 
 # Include routers
 try:
@@ -102,6 +112,11 @@ try:
 except Exception as e:
     print(f" Admin router error: {e}")
 
+try:
+    app.include_router(keep_alive.router, prefix="/api", tags=["Keep-Alive"])
+except Exception as e:
+    print(f"Keep-alive router error: {e}")
+
 # Serve static files (uploaded images)
 # Use persistent storage on Render, local storage for development
 if os.getenv("PERSISTENT_STORAGE"):
@@ -138,14 +153,17 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    # Quick health check that doesn't wait for database
+    return {"status": "starting", "database": "checking", "version": "1.0.1"}
+
+@app.get("/ready")
+async def readiness_check():
+    # Full readiness check with database
     try:
-        # Test database connection
-        from sqlalchemy import text
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return {"status": "healthy", "database": "connected", "version": "1.0.1"}
+        db_status = test_connection()
+        return {"status": "ready", "database": "connected" if db_status else "disconnected", "version": "1.0.1"}
     except Exception as e:
-        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+        return {"status": "not_ready", "database": "disconnected", "error": str(e)}
 
 @app.get("/debug")
 async def debug_routes():
@@ -153,6 +171,29 @@ async def debug_routes():
         "message": "Debug endpoint",
         "routes": [route.path for route in app.routes],
         "categories_router": "categories router should be included"
+    }
+
+@app.get("/debug/env")
+async def debug_env():
+    """Debug endpoint to check environment variables (without exposing sensitive data)"""
+    db_url = os.getenv("DATABASE_URL", "Not set")
+    if db_url and "@" in db_url:
+        # Hide credentials in the URL
+        parts = db_url.split("@")
+        if len(parts) >= 2:
+            safe_url = f"postgresql://***:***@{parts[1]}"
+        else:
+            safe_url = "Invalid format"
+    else:
+        safe_url = db_url
+    
+    return {
+        "database_url_configured": bool(os.getenv("DATABASE_URL")),
+        "database_url_safe": safe_url,
+        "database_url_length": len(db_url) if db_url else 0,
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "seed_on_start": os.getenv("SEED_ON_START", "false"),
+        "persistent_storage": os.getenv("PERSISTENT_STORAGE", "Not set")
     }
 
 if __name__ == "__main__":

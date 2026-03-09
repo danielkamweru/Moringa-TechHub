@@ -23,7 +23,7 @@ class TestTechHubBasics:
         try:
             db_gen = get_db()
             db = next(db_gen)
-            # Simple query to test connection
+            # Simple query to test conbnection
             result = db.execute(text("SELECT 1")).scalar()
             assert result == 1
             db.close()
