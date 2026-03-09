@@ -9,6 +9,9 @@ import os
 import asyncio
 
 # Import seed function
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from seed_final import seed_database
 
 # Configure logging
@@ -197,6 +200,16 @@ async def debug_env():
         "persistent_storage": os.getenv("PERSISTENT_STORAGE", "Not set"),
         "database_type": "SQLite" if db_url.startswith("sqlite") else "PostgreSQL"
     }
+
+@app.post("/seed")
+async def manual_seed():
+    """Manual endpoint to seed the database"""
+    try:
+        seed_database()
+        return {"message": "Database seeded successfully", "status": "success"}
+    except Exception as e:
+        logger.error(f"Manual seeding failed: {e}")
+        return {"message": f"Seeding failed: {str(e)}", "status": "error"}
 
 if __name__ == "__main__":
     import uvicorn
