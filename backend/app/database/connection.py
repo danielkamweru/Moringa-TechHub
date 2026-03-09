@@ -39,31 +39,38 @@ if DATABASE_URL.startswith("sqlite"):
 else:
     logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
     
-    # Add SSL configuration for production PostgreSQL
-    if "render.com" in DATABASE_URL and "?sslmode=" not in DATABASE_URL:
-        DATABASE_URL += "?sslmode=require"
-    
-    try:
-        # For Render PostgreSQL, don't need DNS check as it's internal
-        engine = create_engine(
-            DATABASE_URL,
-            pool_size=20,
-            max_overflow=30,
-            pool_pre_ping=True,
-            pool_recycle=3600,
-            connect_args={
-                "connect_timeout": 10,
-            }
-        )
-        logger.info("PostgreSQL engine created successfully")
-    except Exception as e:
-        logger.error(f"Failed to create PostgreSQL engine: {e}")
-        if USE_POSTGRES:
-            logger.error("USE_POSTGRES is true but PostgreSQL failed. Application may not work properly.")
-        else:
-            logger.info("Falling back to SQLite database")
-            DATABASE_URL = "sqlite:///./moringa_techhub.db"
-            engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    # Check DNS resolution BEFORE creating engine
+    if "dpg-d6naf0shg0os73a2b9qg-a" in DATABASE_URL:
+        logger.error("Old external DATABASE_URL detected - cannot resolve hostname")
+        logger.info("Falling back to SQLite database")
+        DATABASE_URL = "sqlite:///./moringa_techhub.db"
+        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    else:
+        # Add SSL configuration for production PostgreSQL
+        if "render.com" in DATABASE_URL and "?sslmode=" not in DATABASE_URL:
+            DATABASE_URL += "?sslmode=require"
+        
+        try:
+            # For psycopg2, SSL should be in URL, not in connect_args
+            engine = create_engine(
+                DATABASE_URL,
+                pool_size=20,
+                max_overflow=30,
+                pool_pre_ping=True,
+                pool_recycle=3600,
+                connect_args={
+                    "connect_timeout": 10,
+                }
+            )
+            logger.info("PostgreSQL engine created successfully")
+        except Exception as e:
+            logger.error(f"Failed to create PostgreSQL engine: {e}")
+            if USE_POSTGRES:
+                logger.error("USE_POSTGRES is true but PostgreSQL failed. Application may not work properly.")
+            else:
+                logger.info("Falling back to SQLite database")
+                DATABASE_URL = "sqlite:///./moringa_techhub.db"
+                engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
