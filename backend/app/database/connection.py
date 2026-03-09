@@ -18,10 +18,10 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 logger.info(f"Original DATABASE_URL: {DATABASE_URL}")
 
 # Get the actual Render database connection from environment
-render_db_url = os.getenv("DATABASE_URL", "")
+render_db_url = os.getenv("DATABASE_URL", "").strip()  # Strip whitespace and newlines
 if render_db_url and "postgresql://" in render_db_url:
     # Use the DATABASE_URL as-is, just ensure SSL is configured
-    DATABASE_URL = render_db_url
+    DATABASE_URL = render_db_url.replace("\n", "").replace("\r", "")  # Remove any newlines
     if "?sslmode=" not in DATABASE_URL:
         DATABASE_URL += "?sslmode=require"
     logger.info(f"Using configured database")
