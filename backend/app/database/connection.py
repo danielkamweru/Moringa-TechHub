@@ -31,6 +31,19 @@ else:
         DATABASE_URL += "?sslmode=require"
     
     try:
+        # Test if we can resolve the hostname first
+        import socket
+        host = DATABASE_URL.split('@')[1].split('/')[0] if '@' in DATABASE_URL else None
+        if host:
+            try:
+                socket.gethostbyname(host)
+                logger.info(f"DNS resolution successful for {host}")
+            except socket.gaierror:
+                logger.error(f"DNS resolution failed for {host} - falling back to SQLite")
+                DATABASE_URL = "sqlite:///./moringa_techhub.db"
+                engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+                raise Exception("DNS resolution failed")
+        
         # For psycopg2, SSL should be in the URL, not in connect_args
         engine = create_engine(
             DATABASE_URL,
