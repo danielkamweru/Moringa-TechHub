@@ -51,7 +51,7 @@ export const login = createAsyncThunk(
       if (error.response?.status === 429) {
         return rejectWithValue('Too many login attempts. Please try again later.')
       }
-      return rejectWithValue(error.response?.data?.detail || 'Login failed. Please try again.')
+      return rejectWithValue(error.response?.data?.detail || 'Wait for backend warming up, it may take a while.')
     }
   }
 )
