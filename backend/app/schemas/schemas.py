@@ -26,6 +26,13 @@ class UserBase(BaseModel):
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
 
+class UserResponseBase(BaseModel):
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+
 class UserCreate(UserBase):
     password: constr(min_length=8, strip_whitespace=True)
     role: Optional[RoleEnum] = RoleEnum.USER
@@ -44,14 +51,26 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
 
 
-class UserResponse(UserBase):
+class UserResponse(UserResponseBase):
     id: int
-    role: RoleEnum
-    is_active: bool
-    created_at: datetime
+    role: Optional[RoleEnum] = None
+    is_active: Optional[bool] = None
+    created_at: Optional[datetime] = None
     profile: Optional['ProfileResponse'] = None
 
     model_config = ConfigDict(from_attributes=True)
+    
+    @field_validator('role', mode='before')
+    @classmethod
+    def convert_role_enum(cls, v):
+        if v is None:
+            return None
+        if hasattr(v, 'value'):
+            return v
+        try:
+            return RoleEnum(v) if isinstance(v, str) else v
+        except (ValueError, TypeError):
+            return None
 
 
 class ProfileResponse(BaseModel):
