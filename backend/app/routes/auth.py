@@ -4,6 +4,8 @@ from sqlalchemy.exc import IntegrityError
 import os
 import uuid
 from typing import Optional
+import signal
+from contextlib import contextmanager
 
 from app.database.connection import get_db
 from app.database.models import User, RoleEnum
@@ -23,6 +25,25 @@ from app.core.dependencies import get_current_user
 
 router = APIRouter(tags=["Authentication"])
 
+class TimeoutError(Exception):
+    pass
+
+@contextmanager
+def timeout_context(seconds):
+    def timeout_handler(signum, frame):
+        raise TimeoutError(f"Operation timed out after {seconds} seconds")
+    
+    # Set the timeout handler
+    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(seconds)
+    
+    try:
+        yield
+    finally:
+        # Restore the old handler and cancel the alarm
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+
 
 # =========================
 # Register
@@ -31,109 +52,112 @@ router = APIRouter(tags=["Authentication"])
 @router.post("/register")
 def register(request_data: dict = Body(...), db: Session = Depends(get_db)):
     try:
-        # Extract and validate data
-        email = request_data.get('email', '').strip().lower()
-        name = request_data.get('name', '').strip()
-        password = request_data.get('password', '')
-        role = request_data.get('role', 'user')
-        
-        # Validation
-        if not email:
-            raise HTTPException(status_code=400, detail="Email is required")
-        if not name:
-            raise HTTPException(status_code=400, detail="Name is required")
-        if not password:
-            raise HTTPException(status_code=400, detail="Password is required")
-        if len(password) < 6:
-            raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-        # Bcrypt has a 72-byte limit
-        password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 72:
-            raise HTTPException(status_code=400, detail="Password must be 72 bytes or less (approximately 72 characters)")
-        
-        # Check if email or username already exists
-        existing_user_by_email = db.query(User).filter(User.email == email).first()
-        existing_user_by_username = db.query(User).filter(User.username == name).first()
-        
-        if existing_user_by_email:
-            # If user exists but inactive, reactivate them and update password
-            if not existing_user_by_email.is_active:
-                existing_user_by_email.is_active = True
-                # Update password to new hash
-                existing_user_by_email.hashed_password = get_password_hash(password)
-                db.commit()
-                db.refresh(existing_user_by_email)
-                
-                access_token = create_access_token(data={"sub": existing_user_by_email.username})
-                return {
-                    "token": access_token,
-                    "user": {
-                        "id": existing_user_by_email.id,
-                        "username": existing_user_by_email.username,
-                        "email": existing_user_by_email.email,
-                        "full_name": existing_user_by_email.full_name,
-                        "role": existing_user_by_email.role.value,
-                        "is_active": existing_user_by_email.is_active,
-                        "created_at": existing_user_by_email.created_at
+        with timeout_context(25):  # 25 second timeout
+            # Extract and validate data
+            email = request_data.get('email', '').strip().lower()
+            name = request_data.get('name', '').strip()
+            password = request_data.get('password', '')
+            role = request_data.get('role', 'user')
+            
+            # Validation
+            if not email:
+                raise HTTPException(status_code=400, detail="Email is required")
+            if not name:
+                raise HTTPException(status_code=400, detail="Name is required")
+            if not password:
+                raise HTTPException(status_code=400, detail="Password is required")
+            if len(password) < 6:
+                raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+            # Bcrypt has a 72-byte limit
+            password_bytes = password.encode('utf-8')
+            if len(password_bytes) > 72:
+                raise HTTPException(status_code=400, detail="Password must be 72 bytes or less (approximately 72 characters)")
+            
+            # Check if email or username already exists
+            existing_user_by_email = db.query(User).filter(User.email == email).first()
+            existing_user_by_username = db.query(User).filter(User.username == name).first()
+            
+            if existing_user_by_email:
+                # If user exists but inactive, reactivate them and update password
+                if not existing_user_by_email.is_active:
+                    existing_user_by_email.is_active = True
+                    # Update password to new hash
+                    existing_user_by_email.hashed_password = get_password_hash(password)
+                    db.commit()
+                    db.refresh(existing_user_by_email)
+                    
+                    access_token = create_access_token(data={"sub": existing_user_by_email.username})
+                    return {
+                        "token": access_token,
+                        "user": {
+                            "id": existing_user_by_email.id,
+                            "username": existing_user_by_email.username,
+                            "email": existing_user_by_email.email,
+                            "full_name": existing_user_by_email.full_name,
+                            "role": existing_user_by_email.role.value,
+                            "is_active": existing_user_by_email.is_active,
+                            "created_at": existing_user_by_email.created_at
+                        }
                     }
-                }
-            else:
-                raise HTTPException(status_code=400, detail="Email already registered")
-        
-        if existing_user_by_username:
-            raise HTTPException(status_code=400, detail="Username already taken")
-        
-        # Map role
-        role_enum = RoleEnum.USER
-        if role in ['writer', 'tech_writer', 'techwriter']:
-            role_enum = RoleEnum.TECH_WRITER
-        elif role == 'admin':
-            role_enum = RoleEnum.ADMIN
-
-        # Create user
-        try:
-            hashed_password = get_password_hash(password)
-            db_user = User(
-                email=email,
-                username=name,
-                full_name=name,
-                hashed_password=hashed_password,
-                role=role_enum,
-                is_active=True,
-            )
-
-            db.add(db_user)
-            db.commit()
-            db.refresh(db_user)
-        except IntegrityError as db_error:
-            db.rollback()
-            # Check if it's a unique constraint violation
-            error_str = str(db_error.orig).lower() if hasattr(db_error, 'orig') else str(db_error).lower()
-            if 'unique' in error_str or 'duplicate' in error_str:
-                if 'email' in error_str or 'users.email' in error_str:
+                else:
                     raise HTTPException(status_code=400, detail="Email already registered")
-                elif 'username' in error_str or 'users.username' in error_str:
-                    raise HTTPException(status_code=400, detail="Username already taken")
-            raise HTTPException(status_code=400, detail="Registration failed: User with this email or username already exists")
-        except Exception as db_error:
-            db.rollback()
-            raise
+            
+            if existing_user_by_username:
+                raise HTTPException(status_code=400, detail="Username already taken")
+            
+            # Map role
+            role_enum = RoleEnum.USER
+            if role in ['writer', 'tech_writer', 'techwriter']:
+                role_enum = RoleEnum.TECH_WRITER
+            elif role == 'admin':
+                role_enum = RoleEnum.ADMIN
 
-        # Create token
-        access_token = create_access_token(data={"sub": db_user.username})
+            # Create user
+            try:
+                hashed_password = get_password_hash(password)
+                db_user = User(
+                    email=email,
+                    username=name,
+                    full_name=name,
+                    hashed_password=hashed_password,
+                    role=role_enum,
+                    is_active=True,
+                )
 
-        return {
-            "token": access_token,
-            "user": {
-                "id": db_user.id,
-                "username": db_user.username,
-                "email": db_user.email,
-                "full_name": db_user.full_name,
-                "role": db_user.role.value,
-                "is_active": db_user.is_active,
-                "created_at": db_user.created_at
+                db.add(db_user)
+                db.commit()
+                db.refresh(db_user)
+            except IntegrityError as db_error:
+                db.rollback()
+                # Check if it's a unique constraint violation
+                error_str = str(db_error.orig).lower() if hasattr(db_error, 'orig') else str(db_error).lower()
+                if 'unique' in error_str or 'duplicate' in error_str:
+                    if 'email' in error_str or 'users.email' in error_str:
+                        raise HTTPException(status_code=400, detail="Email already registered")
+                    elif 'username' in error_str or 'users.username' in error_str:
+                        raise HTTPException(status_code=400, detail="Username already taken")
+                raise HTTPException(status_code=400, detail="Registration failed: User with this email or username already exists")
+            except Exception as db_error:
+                db.rollback()
+                raise
+
+            # Create token
+            access_token = create_access_token(data={"sub": db_user.username})
+
+            return {
+                "token": access_token,
+                "user": {
+                    "id": db_user.id,
+                    "username": db_user.username,
+                    "email": db_user.email,
+                    "full_name": db_user.full_name,
+                    "role": db_user.role.value,
+                    "is_active": db_user.is_active,
+                    "created_at": db_user.created_at
+                }
             }
-        }
+    except TimeoutError:
+        raise HTTPException(status_code=408, detail="Registration request timed out. Please try again.")
     except HTTPException:
         raise
     except IntegrityError as e:
@@ -161,60 +185,63 @@ def register(request_data: dict = Body(...), db: Session = Depends(get_db)):
 @router.post("/login")
 def login(request_data: dict = Body(...), db: Session = Depends(get_db)):
     try:
-        email = request_data.get('email', '').strip().lower()
-        password = request_data.get('password', '')
-        
-        if not email:
-            raise HTTPException(status_code=400, detail="Email is required")
-        if not password:
-            raise HTTPException(status_code=400, detail="Password is required")
-        
-        user = db.query(User).filter(User.email == email).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+        with timeout_context(20):  # 20 second timeout for login
+            email = request_data.get('email', '').strip().lower()
+            password = request_data.get('password', '')
+            
+            if not email:
+                raise HTTPException(status_code=400, detail="Email is required")
+            if not password:
+                raise HTTPException(status_code=400, detail="Password is required")
+            
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        # Verify password - handle migration from old "simple_hash" format
-        password_valid = False
-        if not user.hashed_password:
-            # No password set - invalid
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        elif user.hashed_password == "simple_hash":
-            # Migration path: accept any password for old users, then upgrade their hash
-            password_valid = True
-            # Upgrade to proper bcrypt hash
-            user.hashed_password = get_password_hash(password)
-            db.commit()
-            db.refresh(user)
-        else:
-            # Normal password verification
-            try:
-                password_valid = verify_password(password, user.hashed_password)
-            except Exception as e:
-                # If verification fails (e.g., invalid hash format), treat as invalid
-                password_valid = False
-        
-        if not password_valid:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        
-        # Check if user is deactivated
-        if not user.is_active:
-            raise HTTPException(status_code=403, detail="Your account has been deactivated. Please contact an administrator.")
-        
-        # User is active, proceed with login
-        access_token = create_access_token(data={"sub": user.username})
+            # Verify password - handle migration from old "simple_hash" format
+            password_valid = False
+            if not user.hashed_password:
+                # No password set - invalid
+                raise HTTPException(status_code=401, detail="Invalid credentials")
+            elif user.hashed_password == "simple_hash":
+                # Migration path: accept any password for old users, then upgrade their hash
+                password_valid = True
+                # Upgrade to proper bcrypt hash
+                user.hashed_password = get_password_hash(password)
+                db.commit()
+                db.refresh(user)
+            else:
+                # Normal password verification
+                try:
+                    password_valid = verify_password(password, user.hashed_password)
+                except Exception as e:
+                    # If verification fails (e.g., invalid hash format), treat as invalid
+                    password_valid = False
+            
+            if not password_valid:
+                raise HTTPException(status_code=401, detail="Invalid credentials")
+            
+            # Check if user is deactivated
+            if not user.is_active:
+                raise HTTPException(status_code=403, detail="Your account has been deactivated. Please contact an administrator.")
+            
+            # User is active, proceed with login
+            access_token = create_access_token(data={"sub": user.username})
 
-        return {
-            "token": access_token,
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "full_name": user.full_name,
-                "role": user.role.value,
-                "is_active": user.is_active,
-                "created_at": user.created_at
+            return {
+                "token": access_token,
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "full_name": user.full_name,
+                    "role": user.role.value,
+                    "is_active": user.is_active,
+                    "created_at": user.created_at
+                }
             }
-        }
+    except TimeoutError:
+        raise HTTPException(status_code=408, detail="Login request timed out. Please try again.")
     except HTTPException:
         raise
     except Exception as e:

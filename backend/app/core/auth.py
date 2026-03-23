@@ -50,8 +50,8 @@ def get_password_hash(password: str) -> str:
         password_bytes = password_bytes[:72]
     
     try:
-        # Generate salt and hash password
-        salt = bcrypt.gensalt(rounds=12)
+        # Generate salt and hash password with reduced rounds for better performance
+        salt = bcrypt.gensalt(rounds=10)  # Reduced from 12 to 10 for faster hashing
         hashed = bcrypt.hashpw(password_bytes, salt)
         return hashed.decode('utf-8')
     except ValueError as e:
