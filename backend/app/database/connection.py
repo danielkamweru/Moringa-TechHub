@@ -50,21 +50,25 @@ logger.info(
     f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}"
 )
 
-# Create PostgreSQL engine using Render's exact connection format
-# Use the DATABASE_URL exactly as provided by Render
+# Create PostgreSQL engine with SSL only in connect_args
+# Remove SSL from URL and handle it in engine configuration
 original_db_url = os.getenv("DATABASE_URL", "").strip()
 if original_db_url:
-    # Use the exact DATABASE_URL from Render without modifications
-    DATABASE_URL = original_db_url.replace("\n", "").replace("\r", "")
-    logger.info(f"Using original Render DATABASE_URL: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
+    # Remove any SSL parameters from URL to avoid conflicts
+    db_url = original_db_url.replace("\n", "").replace("\r", "")
+    if "?sslmode=" in db_url:
+        db_url = db_url.split("?sslmode=")[0]
+    DATABASE_URL = db_url
+    logger.info(f"Using DATABASE_URL without SSL params: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
-# Create engine with minimal configuration to let Render handle SSL
+# Create engine with SSL configuration only in connect_args
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300,
     connect_args={
         "connect_timeout": 20,
+        "sslmode": "require"
     }
 )
 logger.info("PostgreSQL engine created successfully")
