@@ -43,22 +43,26 @@ if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost
 
 logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
-# Create PostgreSQL engine with explicit SSL configuration
-# Render PostgreSQL requires specific SSL settings
+# Create PostgreSQL engine with proper SSL configuration
+# Parse and rebuild the DATABASE_URL to ensure SSL is correctly configured
 original_db_url = os.getenv("DATABASE_URL", "").strip()
 if original_db_url:
-    DATABASE_URL = original_db_url.replace("\n", "").replace("\r", "")
-    # Ensure SSL is properly configured for Render
-    if "?sslmode=" not in DATABASE_URL:
-        DATABASE_URL += "?sslmode=require"
+    # Remove any existing SSL parameters
+    db_url = original_db_url.replace("\n", "").replace("\r", "")
+    if "?sslmode=" in db_url:
+        db_url = db_url.split("?sslmode=")[0]
+    
+    # Add SSL parameter
+    DATABASE_URL = db_url + "?sslmode=require"
+    
+    logger.info(f"Rebuilt DATABASE_URL with SSL: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300,  # 5 minutes
     connect_args={
-        "connect_timeout": 10,
-        "sslmode": "require"
+        "connect_timeout": 10
     }
 )
 logger.info("PostgreSQL engine created successfully")
