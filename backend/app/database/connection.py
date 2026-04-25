@@ -43,16 +43,13 @@ if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost
 
 logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
-# Create PostgreSQL engine with proper SSL configuration
+# Create PostgreSQL engine with minimal configuration for Render
 engine = create_engine(
     DATABASE_URL,
-    pool_size=10,  # Reduced from 20 to prevent connection exhaustion
-    max_overflow=20,  # Reduced from 30
     pool_pre_ping=True,
-    pool_recycle=1800,  # Reduced from 3600 to 30 minutes
+    pool_recycle=300,  # 5 minutes
     connect_args={
-        "connect_timeout": 30,  # Increased from 10 to 30 seconds
-        "application_name": "moringa_techhub_api",
+        "connect_timeout": 10,
         "sslmode": "disable"
     }
 )
