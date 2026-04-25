@@ -43,14 +43,14 @@ if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost
 
 logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
-# Create PostgreSQL engine with minimal configuration for Render
+# Create PostgreSQL engine with Render-compatible SSL configuration
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300,  # 5 minutes
     connect_args={
         "connect_timeout": 10,
-        "sslmode": "disable"
+        "sslmode": "require"
     }
 )
 logger.info("PostgreSQL engine created successfully")
