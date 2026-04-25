@@ -75,30 +75,23 @@ def get_db():
         db.close()
 
 def test_connection():
-    """Test database connection with retry logic"""
-    max_retries = 1  # Reduce retries for faster startup
-    retry_delay = 1
-    
-    for attempt in range(max_retries):
-        try:
-            with engine.connect() as connection:
-                from sqlalchemy import text
-                connection.execute(text("SELECT 1"))
-                logger.info("Database connection successful")
-                return True
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "name or service not known" in error_msg or "could not translate host name" in error_msg:
-                logger.error(f"DNS resolution failed - DATABASE_URL may be incorrect: {e}")
-                return False
-            elif "connection" in error_msg and "refused" in error_msg:
-                logger.warning(f"Connection refused - database may be starting: {e}")
-            else:
-                logger.warning(f"Database connection attempt {attempt + 1} failed: {e}")
-            
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay)
-            else:
-                logger.error("Failed to connect to database after all retries")
-                return False
-    return False
+    """Test database connection with psycopg2 directly"""
+    try:
+        import psycopg2
+        # Test direct psycopg2 connection first
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        conn.close()
+        logger.info("Direct psycopg2 connection successful")
+        
+        # Now test SQLAlchemy connection
+        with engine.connect() as connection:
+            from sqlalchemy import text
+            connection.execute(text("SELECT 1"))
+            logger.info("SQLAlchemy connection successful")
+            return True
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        return False
