@@ -36,9 +36,7 @@ logger.info(f"Final DATABASE_URL: {DATABASE_URL}")
 if not DATABASE_URL or DATABASE_URL == "postgresql://username:password@localhost:5432/moringa_techhub":
     raise ValueError("DATABASE_URL must be properly configured in Render dashboard")
 
-# Add SSL configuration for production PostgreSQL
-if "render.com" in DATABASE_URL and "?sslmode=" not in DATABASE_URL:
-    DATABASE_URL += "?sslmode=require"
+# SSL configuration will be handled in engine connect_args only
 
 logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
