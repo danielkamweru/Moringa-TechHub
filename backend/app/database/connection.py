@@ -68,8 +68,8 @@ def get_db():
 
 def test_connection():
     """Test database connection with retry logic"""
-    max_retries = 3
-    retry_delay = 2
+    max_retries = 1  # Reduce retries for faster startup
+    retry_delay = 1
     
     for attempt in range(max_retries):
         try:
