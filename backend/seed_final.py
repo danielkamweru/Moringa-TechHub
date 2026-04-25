@@ -109,7 +109,7 @@ def seed_database():
                     media_url=content_item.get("url", ""),
                     thumbnail_url=content_item["thumbnail"],
                     author_id=admin_user.id,
-                    status=ContentStatusEnum.PUBLISHED,  # All content as published for users to see
+                    status=ContentStatusEnum.DRAFT,  # All content as draft for admin approval
                     likes_count=0,  # Required integer field
                     dislikes_count=0,  # Required integer field
                     is_flagged=False  # Required boolean field
