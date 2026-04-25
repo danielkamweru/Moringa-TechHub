@@ -22,8 +22,9 @@ render_db_url = os.getenv("DATABASE_URL", "").strip()  # Strip whitespace and ne
 if render_db_url and "postgresql://" in render_db_url:
     # Use the DATABASE_URL as-is, just ensure SSL is configured
     DATABASE_URL = render_db_url.replace("\n", "").replace("\r", "")  # Remove any newlines
-    if "?sslmode=" not in DATABASE_URL:
-        DATABASE_URL += "?sslmode=require"
+    # Remove any existing sslmode parameter to avoid conflicts
+    if "?sslmode=" in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
     logger.info(f"Using configured database")
 else:
     DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub"
@@ -41,7 +42,7 @@ if "render.com" in DATABASE_URL and "?sslmode=" not in DATABASE_URL:
 
 logger.info(f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
-# Create PostgreSQL engine
+# Create PostgreSQL engine with proper SSL configuration
 engine = create_engine(
     DATABASE_URL,
     pool_size=10,  # Reduced from 20 to prevent connection exhaustion
@@ -50,7 +51,11 @@ engine = create_engine(
     pool_recycle=1800,  # Reduced from 3600 to 30 minutes
     connect_args={
         "connect_timeout": 30,  # Increased from 10 to 30 seconds
-        "application_name": "moringa_techhub_api"
+        "application_name": "moringa_techhub_api",
+        "sslmode": "require",
+        "sslcert": None,
+        "sslkey": None,
+        "sslrootcert": None
     }
 )
 logger.info("PostgreSQL engine created successfully")
