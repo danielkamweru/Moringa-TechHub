@@ -61,14 +61,18 @@ if original_db_url:
     DATABASE_URL = db_url
     logger.info(f"Using DATABASE_URL without SSL params: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
-# Create engine with SSL configuration only in connect_args
+# Create engine with explicit SSL certificate configuration
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300,
     connect_args={
         "connect_timeout": 20,
-        "sslmode": "require"
+        "sslmode": "require",
+        "sslcert": None,
+        "sslkey": None,
+        "sslrootcert": None,
+        "sslcrl": None
     }
 )
 logger.info("PostgreSQL engine created successfully")
