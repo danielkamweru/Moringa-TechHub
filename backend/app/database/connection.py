@@ -20,11 +20,14 @@ logger.info(f"Original DATABASE_URL: {DATABASE_URL}")
 # Get the actual Render database connection from environment
 render_db_url = os.getenv("DATABASE_URL", "").strip()  # Strip whitespace and newlines
 if render_db_url and "postgresql://" in render_db_url:
-    # Use the DATABASE_URL as-is, just ensure SSL is configured
+    # Use the DATABASE_URL as-is, but remove any SSL parameters to avoid conflicts
     DATABASE_URL = render_db_url.replace("\n", "").replace("\r", "")  # Remove any newlines
-    # Remove any existing sslmode parameter to avoid conflicts
+    # Remove any existing sslmode parameter completely to avoid conflicts
     if "?sslmode=" in DATABASE_URL:
         DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
+    # Also remove any trailing ? if it exists after removing sslmode
+    if DATABASE_URL.endswith("?"):
+        DATABASE_URL = DATABASE_URL[:-1]
     logger.info(f"Using configured database")
 else:
     DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub"
