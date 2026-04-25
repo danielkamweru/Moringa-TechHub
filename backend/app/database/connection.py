@@ -53,7 +53,7 @@ engine = create_engine(
     connect_args={
         "connect_timeout": 30,  # Increased from 10 to 30 seconds
         "application_name": "moringa_techhub_api",
-        "sslmode": "prefer"
+        "sslmode": "disable"
     }
 )
 logger.info("PostgreSQL engine created successfully")
