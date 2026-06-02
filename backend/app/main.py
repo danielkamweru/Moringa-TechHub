@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.database.connection import engine, test_connection
-from app.database.models import Base
+from app.database.connection import engine, test_connection, get_db
+from app.database.models import Base, Content, Category
 from app.routes import auth, users, content, comments, categories, notifications, wishlist, admin_enhanced, keep_alive
 import logging
 import os
@@ -58,13 +58,31 @@ async def startup_event():
             logger.info("Database tables created successfully")
             
             # Seed database if requested
-            if os.getenv("SEED_ON_START", "false").lower() == "true":
-                logger.info("Seeding database on startup...")
+            seed_on_start = os.getenv("SEED_ON_START", "false")
+            logger.info(f"SEED_ON_START raw value: '{seed_on_start}'")
+            logger.info(f"SEED_ON_START lower: '{seed_on_start.lower()}'")
+            logger.info(f"SEED_ON_START comparison: {seed_on_start.lower() == 'true'}")
+            if seed_on_start.lower() == "true":
+                logger.info("SEED_ON_START is true, starting seed...")
                 try:
                     seed_database()
                     logger.info("Database seeded successfully")
                 except Exception as e:
                     logger.error(f"Database seeding failed: {e}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                logger.info(f"SEED_ON_START is '{seed_on_start}', skipping seed")
+                
+                # Log count of seeded content with a fresh session
+                try:
+                    content_db = next(get_db())
+                    content_count = content_db.query(Content).count()
+                    logger.info(f"Total content items in database: {content_count}")
+                    categories_count = content_db.query(Category).count()
+                    logger.info(f"Total categories in database: {categories_count}")
+                except Exception as e:
+                    logger.error(f"Failed to count content: {e}")
                     
         except Exception as e:
             logger.error(f"Database setup failed: {e}")

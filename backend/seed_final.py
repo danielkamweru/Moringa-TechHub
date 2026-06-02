@@ -1,6 +1,7 @@
 from app.database.connection import get_db
 from app.database.models import User, Category, Content, ContentTypeEnum, RoleEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum
 import logging
+from sqlalchemy import inspect
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +64,10 @@ def seed_database():
                 db.commit()
                 db.refresh(category)
                 category_objects[cat_name] = category
+                logger.info(f"Created category: {cat_name}")
             else:
                 category_objects[cat_name] = existing_cat
+                logger.info(f"Category already exists: {cat_name}")
         
         # Get admin user
         admin_user = db.query(User).filter(User.email == "admin@techhub.com").first()
@@ -80,6 +83,9 @@ def seed_database():
             db.add(admin_user)
             db.commit()
             db.refresh(admin_user)
+            logger.info(f"Created admin user: admin@techhub.com")
+        else:
+            logger.info(f"Using existing admin user: admin@techhub.com")
         
         # Seed content
         # First, delete all existing content to start fresh
@@ -116,6 +122,9 @@ def seed_database():
                 )
                 db.add(new_content)
                 db.commit()
+                logger.info(f"Created content: {content_item['title'][:50]}...")
+            else:
+                logger.info(f"Content already exists: {content_item['title'][:50]}...")
         
         logger.info(f"Database seeded successfully with {len(SEED_CONTENT)} items")
         
