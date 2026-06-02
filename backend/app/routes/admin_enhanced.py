@@ -184,9 +184,33 @@ def get_pending_content(
     db: Session = Depends(get_db)
 ):
     """Get all content pending approval"""
-    return db.query(Content).filter(
+    from sqlalchemy.orm import joinedload
+    return db.query(Content).options(
+        joinedload(Content.author),
+        joinedload(Content.category)
+    ).filter(
         Content.status == ContentStatusEnum.REVIEW
     ).offset(skip).limit(limit).all()
+
+@router.get("/content/all", response_model=List[ContentResponse])
+def get_all_content_admin(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
+    status: Optional[ContentStatusEnum] = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """Get ALL content for admin review - admin only"""
+    from sqlalchemy.orm import joinedload
+    query = db.query(Content).options(
+        joinedload(Content.author),
+        joinedload(Content.category)
+    )
+    
+    if status:
+        query = query.filter(Content.status == status)
+    
+    return query.order_by(desc(Content.created_at)).offset(skip).limit(limit).all()
 
 @router.put("/content/{content_id}/reject")
 def reject_content(

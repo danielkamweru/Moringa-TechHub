@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 from typing import List, Optional
@@ -149,33 +149,26 @@ def get_content(
         if category_id:
             query = query.filter(Content.category_id == category_id)
         
-        # Only filter by status if specified AND user is not admin
-        if status and current_user.role != RoleEnum.ADMIN:
-            query = query.filter(Content.status == status)
-        elif current_user.role == RoleEnum.ADMIN:
-            # Admin sees all content
-            pass
+# Filter by status and role
+        if current_user.role == RoleEnum.ADMIN:
+            # Admin sees all content - no status filter unless explicitly specified
+            if status:
+                query = query.filter(Content.status == status)
         elif current_user.role == RoleEnum.TECH_WRITER:
-            # Tech writers can see their own content (any status) + published content from others
-            query = query.filter(
-                (Content.author_id == current_user.id) | 
-                (Content.status == ContentStatusEnum.PUBLISHED)
-            )
-        else:
-            # Regular users only see published content by default
-            query = query.filter(Content.status == ContentStatusEnum.PUBLISHED)
-        
-        # Filter out flagged content for non-admin users (but allow tech writers to see their own flagged content)
-        if current_user.role != RoleEnum.ADMIN:
-            if current_user.role == RoleEnum.TECH_WRITER:
-                # Tech writers don't see flagged content from others, but can see their own
+            # Tech writers can see their own content (any status) + published/approved content from others
+            if status:
+                query = query.filter(Content.status == status)
+            else:
                 query = query.filter(
                     (Content.author_id == current_user.id) | 
-                    (Content.is_flagged == False)
+                    (Content.status.in_([ContentStatusEnum.PUBLISHED, ContentStatusEnum.APPROVED]))
                 )
-            else:
-                # Regular users never see flagged content
-                query = query.filter(Content.is_flagged == False)
+        else:
+            # Regular users only see published/approved content
+            query = query.filter(
+                Content.status.in_([ContentStatusEnum.PUBLISHED, ContentStatusEnum.APPROVED])
+            )
+        
         # Admin sees ALL content regardless of status or flag
         
         # Sort content: approved content first, then by published_at (newest first)
