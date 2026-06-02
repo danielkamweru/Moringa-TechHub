@@ -471,7 +471,7 @@ def seed_database_endpoint(
 ):
     """Seed database with initial content"""
     try:
-        from backend.seed_final import seed_database
+        from seed_final import seed_database
         seed_database()
         return {"message": "Database seeded successfully"}
     except Exception as e:
