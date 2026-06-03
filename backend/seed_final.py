@@ -1,5 +1,5 @@
 from app.database.connection import get_db
-from app.database.models import User, Category, Content, ContentTypeEnum, RoleEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum
+from app.database.models import User, Category, Content, ContentTypeEnum, RoleEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum, CommentLike, CommentReport
 import logging
 from sqlalchemy import inspect
 from datetime import datetime
@@ -94,39 +94,55 @@ def seed_database():
         # Seed content
         # First, delete all existing content to start fresh
         # Delete in correct order to avoid foreign key constraints
-        db.query(ContentFlag).delete()
-        db.query(Notification).delete()
-        db.query(Like).delete()
-        db.query(Comment).delete()
-        db.query(user_wishlist).delete()
-        db.query(Content).delete()
-        db.commit()
-        
-        for content_item in SEED_CONTENT:
-            # Check if content already exists
-            existing_content = db.query(Content).filter(
-                Content.title == content_item["title"],
-                Content.category_id == category_objects[content_item["category"]].id
-            ).first()
+        try:
+            # Delete in order of dependency (children first)
+            deleted_count = db.query(CommentLike).delete()
+            logger.info(f"Deleted {deleted_count} comment likes")
+            db.commit()
             
-            if not existing_content:
-                new_content = Content(
-                    title=content_item["title"],
-                    subtitle=content_item.get("subtitle", ""),
-                    content_text=content_item["description"],
-                    category_id=category_objects[content_item["category"]].id,
-                    content_type=getattr(ContentTypeEnum, content_item["type"]),
-                    media_url=content_item.get("url", ""),
-                    thumbnail_url=content_item["thumbnail"],
-                    author_id=admin_user.id,
-                    status=ContentStatusEnum.PUBLISHED,
-                    likes_count=0,
-                    dislikes_count=0,
-                    is_flagged=False,
-                    published_at=datetime.utcnow()
-                )
-                db.add(new_content)
-                db.commit()
+            deleted_count = db.query(CommentReport).delete()
+            logger.info(f"Deleted {deleted_count} comment reports")
+            db.commit()
+            
+            deleted_count = db.query(ContentFlag).delete()
+            logger.info(f"Deleted {deleted_count} content flags")
+            db.commit()
+            
+            deleted_count = db.query(Notification).delete()
+            logger.info(f"Deleted {deleted_count} notifications")
+            db.commit()
+            
+            deleted_count = db.query(Like).delete()
+            logger.info(f"Deleted {deleted_count} likes")
+            db.commit()
+            
+            deleted_count = db.query(Comment).delete()
+            logger.info(f"Deleted {deleted_count} comments")
+            db.commit()
+            
+            deleted_count = db.query(user_wishlist).delete()
+            logger.info(f"Deleted {deleted_count} wishlist items")
+            db.commit()
+            
+            deleted_count = db.query(user_categories).delete()
+            logger.info(f"Deleted {deleted_count} user category subscriptions")
+            db.commit()
+            
+            deleted_count = db.query(user_follows).delete()
+            logger.info(f"Deleted {deleted_count} user follows")
+            db.commit()
+            
+            deleted_count = db.query(Content).delete()
+            logger.info(f"Deleted {deleted_count} content items")
+            db.commit()
+            
+            deleted_count = db.query(Category).delete()
+            logger.info(f"Deleted {deleted_count} categories")
+            db.commit()
+        except Exception as e:
+            logger.error(f"Error during deletion: {e}")
+            db.rollback()
+            raise
                 logger.info(f"Created content: {content_item['title'][:50]}...")
             else:
                 logger.info(f"Content already exists: {content_item['title'][:50]}...")
