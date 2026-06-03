@@ -1,5 +1,5 @@
 from app.database.connection import get_db
-from app.database.models import User, Category, Content, ContentTypeEnum, RoleEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum, CommentLike, CommentReport
+from app.database.models import User, Category, Content, ContentTypeEnum, RoleEnum, user_wishlist, user_categories, user_follows, Comment, Like, Notification, ContentFlag, ContentStatusEnum, CommentLike, CommentReport
 import logging
 from sqlalchemy import inspect
 from datetime import datetime
@@ -143,6 +143,34 @@ def seed_database():
             logger.error(f"Error during deletion: {e}")
             db.rollback()
             raise
+        
+        # Seed content
+        for content_item in SEED_CONTENT:
+            # Check if content with this title already exists
+            existing_content = db.query(Content).filter(Content.title == content_item["title"]).first()
+            if not existing_content:
+                # Get category
+                category_name = content_item["category"]
+                category = category_objects.get(category_name)
+                if not category:
+                    logger.warning(f"Category {category_name} not found, skipping content: {content_item['title']}")
+                    continue
+                
+                # Create content
+                content = Content(
+                    title=content_item["title"],
+                    subtitle=content_item.get("subtitle", ""),
+                    content_text=content_item["description"],
+                    content_type=ContentTypeEnum(content_item["type"].lower()),
+                    status=ContentStatusEnum.PUBLISHED,  # Seed content is published
+                    thumbnail_url=content_item["thumbnail"],
+                    url=content_item["url"],
+                    author_id=admin_user.id,
+                    category_id=category.id
+                )
+                db.add(content)
+                db.commit()
+                db.refresh(content)
                 logger.info(f"Created content: {content_item['title'][:50]}...")
             else:
                 logger.info(f"Content already exists: {content_item['title'][:50]}...")
