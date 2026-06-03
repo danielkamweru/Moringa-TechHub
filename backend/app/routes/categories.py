@@ -7,17 +7,7 @@ from app.database.models import User, Content, Category, Notification, Notificat
 from app.schemas.schemas import CategoryCreate, CategoryResponse
 from app.core.dependencies import get_current_user, require_tech_writer_or_admin
 
-# Environment-based logging
 DEBUG_MODE = os.getenv("ENVIRONMENT") == "development"
-
-# Try to import notification models
-try:
-    from app.database.models import Notification
-    NOTIFICATIONS_AVAILABLE = True
-except ImportError:
-    NOTIFICATIONS_AVAILABLE = False
-    if DEBUG_MODE:
-        print("Warning: Notification models not available, subscription notifications will be disabled")
 
 router = APIRouter()
 
@@ -81,22 +71,18 @@ def subscribe_to_category(
         current_user.subscribed_categories.append(category)
         db.commit()
         
-        # Create notification if available
-        if NOTIFICATIONS_AVAILABLE:
-            try:
-                notification = Notification(
-                    user_id=current_user.id,
-                    type=NotificationTypeEnum.SUBSCRIPTION,
-                    title=f"Subscribed to {category.name}",
-                    message=f"You have successfully subscribed to the {category.name} category.",
-                    related_entity_type="category",
-                    related_entity_id=category_id
-                )
-                db.add(notification)
-                db.commit()
-            except Exception as e:
-                if DEBUG_MODE:
-                    print(f"Failed to create notification: {e}")
+        try:
+            notification = Notification(
+                user_id=current_user.id,
+                notification_type=NotificationTypeEnum.STATUS_CHANGE,
+                title=f"Subscribed to {category.name}",
+                message=f"You have successfully subscribed to the {category.name} category."
+            )
+            db.add(notification)
+            db.commit()
+        except Exception as e:
+            if DEBUG_MODE:
+                print(f"Failed to create notification: {e}")
     
     return {"message": "Successfully subscribed to category", "category_id": category_id}
 

@@ -2,6 +2,7 @@ from app.database.connection import get_db
 from app.database.models import User, Category, Content, ContentTypeEnum, RoleEnum, user_wishlist, Comment, Like, Notification, ContentFlag, ContentStatusEnum
 import logging
 from sqlalchemy import inspect
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,9 @@ def seed_database():
             db.refresh(admin_user)
             logger.info(f"Created admin user: admin@techhub.com")
         else:
+            # Update password to simple_hash for login compatibility
+            admin_user.hashed_password = "simple_hash"
+            db.commit()
             logger.info(f"Using existing admin user: admin@techhub.com")
         
         # Seed content
@@ -115,10 +119,11 @@ def seed_database():
                     media_url=content_item.get("url", ""),
                     thumbnail_url=content_item["thumbnail"],
                     author_id=admin_user.id,
-                    status=ContentStatusEnum.REVIEW,  # All content as pending review for admin approval
-                    likes_count=0,  # Required integer field
-                    dislikes_count=0,  # Required integer field
-                    is_flagged=False  # Required boolean field
+                    status=ContentStatusEnum.PUBLISHED,
+                    likes_count=0,
+                    dislikes_count=0,
+                    is_flagged=False,
+                    published_at=datetime.utcnow()
                 )
                 db.add(new_content)
                 db.commit()

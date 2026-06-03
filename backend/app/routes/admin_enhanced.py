@@ -304,7 +304,6 @@ def create_category(
     name: str,
     description: Optional[str] = None,
     color: Optional[str] = "#3B82F6",
-    icon: Optional[str] = None,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
@@ -317,7 +316,6 @@ def create_category(
         name=name,
         description=description,
         color=color,
-        icon=icon,
         created_by=current_user.id
     )
     
@@ -333,7 +331,6 @@ def update_category(
     name: Optional[str] = None,
     description: Optional[str] = None,
     color: Optional[str] = None,
-    icon: Optional[str] = None,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
@@ -345,7 +342,6 @@ def update_category(
     if name: category.name = name
     if description is not None: category.description = description
     if color: category.color = color
-    if icon is not None: category.icon = icon
     
     db.commit()
     return {"message": "Category updated successfully"}

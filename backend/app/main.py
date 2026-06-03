@@ -24,7 +24,8 @@ app = FastAPI(title="Moringa TechHub API", version="1.0.0")
 @app.middleware("http")
 async def handle_options_requests(request: Request, call_next):
     if request.method == "OPTIONS":
-        return {"message": "OK"}
+        from fastapi import Response
+        return Response(content='{"message": "OK"}', media_type="application/json")
     response = await call_next(request)
     return response
 
@@ -151,10 +152,6 @@ if os.path.exists(uploads_path):
     if os.path.exists(avatars_path):
         app.mount("/avatars", StaticFiles(directory=avatars_path), name="avatars")
 
-@app.options("/{path:path}")
-async def options_handler(path: str):
-    return {"message": "OK"}
-
 # @app.middleware("http")
 # async def add_no_cache_headers(request, call_next):
 #     response = await call_next(request)
@@ -162,11 +159,6 @@ async def options_handler(path: str):
 #     response.headers["Pragma"] = "no-cache"
 #     response.headers["Expires"] = "0"
 #     return response
-
-# Add global OPTIONS handler for CORS preflight
-@app.options("/{path:path}")
-async def options_handler(request: Request, path: str):
-    return {"message": "OK"}
 
 @app.get("/")
 async def root():
