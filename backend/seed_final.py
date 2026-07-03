@@ -162,9 +162,9 @@ def seed_database():
                     subtitle=content_item.get("subtitle", ""),
                     content_text=content_item["description"],
                     content_type=ContentTypeEnum(content_item["type"].lower()),
-                    status=ContentStatusEnum.PUBLISHED,  # Seed content is published
+                    status=ContentStatusEnum.REVIEW,  # Pending admin approval
                     thumbnail_url=content_item["thumbnail"],
-                    url=content_item["url"],
+                    media_url=content_item.get("url", ""),
                     author_id=admin_user.id,
                     category_id=category.id
                 )

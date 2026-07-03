@@ -58,32 +58,27 @@ async def startup_event():
             Base.metadata.create_all(bind=engine)
             logger.info("Database tables created successfully")
             
-            # Seed database if requested
+            # Auto-seed if database is empty, or if SEED_ON_START=true forces a reseed
             seed_on_start = os.getenv("SEED_ON_START", "false")
             logger.info(f"SEED_ON_START raw value: '{seed_on_start}'")
-            logger.info(f"SEED_ON_START lower: '{seed_on_start.lower()}'")
-            logger.info(f"SEED_ON_START comparison: {seed_on_start.lower() == 'true'}")
-            if seed_on_start.lower() == "true":
-                logger.info("SEED_ON_START is true, starting seed...")
-                try:
+            try:
+                content_db = next(get_db())
+                content_count = content_db.query(Content).count()
+                categories_count = content_db.query(Category).count()
+                logger.info(f"Total content items in database: {content_count}")
+                logger.info(f"Total categories in database: {categories_count}")
+                
+                should_seed = seed_on_start.lower() == "true" or content_count == 0
+                if should_seed:
+                    logger.info("Seeding database (empty DB or SEED_ON_START=true)...")
                     seed_database()
                     logger.info("Database seeded successfully")
-                except Exception as e:
-                    logger.error(f"Database seeding failed: {e}")
-                    import traceback
-                    traceback.print_exc()
-            else:
-                logger.info(f"SEED_ON_START is '{seed_on_start}', skipping seed")
-                
-                # Log count of seeded content with a fresh session
-                try:
-                    content_db = next(get_db())
-                    content_count = content_db.query(Content).count()
-                    logger.info(f"Total content items in database: {content_count}")
-                    categories_count = content_db.query(Category).count()
-                    logger.info(f"Total categories in database: {categories_count}")
-                except Exception as e:
-                    logger.error(f"Failed to count content: {e}")
+                else:
+                    logger.info(f"Database already has {content_count} items, skipping seed")
+            except Exception as e:
+                logger.error(f"Database seeding failed: {e}")
+                import traceback
+                traceback.print_exc()
                     
         except Exception as e:
             logger.error(f"Database setup failed: {e}")
