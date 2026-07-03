@@ -53,24 +53,22 @@ def seed_database():
     db = next(get_db())
     
     try:
-        # Create categories
-        categories = ["Full-Stack", "Front-End", "DevOps", "Back-End"]
-        category_objects = {}
-        
-        for cat_name in categories:
-            existing_cat = db.query(Category).filter(Category.name == cat_name).first()
-            if not existing_cat:
-                category = Category(name=cat_name, description=f"{cat_name} development content")
-                db.add(category)
-                db.commit()
-                db.refresh(category)
-                category_objects[cat_name] = category
-                logger.info(f"Created category: {cat_name}")
-            else:
-                category_objects[cat_name] = existing_cat
-                logger.info(f"Category already exists: {cat_name}")
-        
-        # Get admin user
+        # Step 1: Delete everything in dependency order (children first)
+        db.query(CommentLike).delete()
+        db.query(CommentReport).delete()
+        db.query(ContentFlag).delete()
+        db.query(Notification).delete()
+        db.query(Like).delete()
+        db.query(Comment).delete()
+        db.execute(user_wishlist.delete())
+        db.execute(user_categories.delete())
+        db.execute(user_follows.delete())
+        db.query(Content).delete()
+        db.query(Category).delete()
+        db.commit()
+        logger.info("Cleared all existing content and categories")
+
+        # Step 2: Get or create admin user (preserve existing users)
         admin_user = db.query(User).filter(User.email == "admin@techhub.com").first()
         if not admin_user:
             admin_user = User(
@@ -84,99 +82,44 @@ def seed_database():
             db.add(admin_user)
             db.commit()
             db.refresh(admin_user)
-            logger.info(f"Created admin user: admin@techhub.com")
+            logger.info("Created admin user: admin@techhub.com")
         else:
-            # Update password to simple_hash for login compatibility
-            admin_user.hashed_password = "simple_hash"
+            logger.info(f"Using existing admin user: {admin_user.email}")
+
+        # Step 3: Create fresh categories
+        category_names = ["Full-Stack", "Front-End", "DevOps", "Back-End"]
+        category_objects = {}
+        for cat_name in category_names:
+            category = Category(name=cat_name, description=f"{cat_name} development content")
+            db.add(category)
             db.commit()
-            logger.info(f"Using existing admin user: admin@techhub.com")
-        
-        # Seed content
-        # First, delete all existing content to start fresh
-        # Delete in correct order to avoid foreign key constraints
-        try:
-            # Delete in order of dependency (children first)
-            deleted_count = db.query(CommentLike).delete()
-            logger.info(f"Deleted {deleted_count} comment likes")
-            db.commit()
-            
-            deleted_count = db.query(CommentReport).delete()
-            logger.info(f"Deleted {deleted_count} comment reports")
-            db.commit()
-            
-            deleted_count = db.query(ContentFlag).delete()
-            logger.info(f"Deleted {deleted_count} content flags")
-            db.commit()
-            
-            deleted_count = db.query(Notification).delete()
-            logger.info(f"Deleted {deleted_count} notifications")
-            db.commit()
-            
-            deleted_count = db.query(Like).delete()
-            logger.info(f"Deleted {deleted_count} likes")
-            db.commit()
-            
-            deleted_count = db.query(Comment).delete()
-            logger.info(f"Deleted {deleted_count} comments")
-            db.commit()
-            
-            deleted_count = db.query(user_wishlist).delete()
-            logger.info(f"Deleted {deleted_count} wishlist items")
-            db.commit()
-            
-            deleted_count = db.query(user_categories).delete()
-            logger.info(f"Deleted {deleted_count} user category subscriptions")
-            db.commit()
-            
-            deleted_count = db.query(user_follows).delete()
-            logger.info(f"Deleted {deleted_count} user follows")
-            db.commit()
-            
-            deleted_count = db.query(Content).delete()
-            logger.info(f"Deleted {deleted_count} content items")
-            db.commit()
-            
-            deleted_count = db.query(Category).delete()
-            logger.info(f"Deleted {deleted_count} categories")
-            db.commit()
-        except Exception as e:
-            logger.error(f"Error during deletion: {e}")
-            db.rollback()
-            raise
-        
-        # Seed content
+            db.refresh(category)
+            category_objects[cat_name] = category
+            logger.info(f"Created category: {cat_name}")
+
+        # Step 4: Seed content
         for content_item in SEED_CONTENT:
-            # Check if content with this title already exists
-            existing_content = db.query(Content).filter(Content.title == content_item["title"]).first()
-            if not existing_content:
-                # Get category
-                category_name = content_item["category"]
-                category = category_objects.get(category_name)
-                if not category:
-                    logger.warning(f"Category {category_name} not found, skipping content: {content_item['title']}")
-                    continue
-                
-                # Create content
-                content = Content(
-                    title=content_item["title"],
-                    subtitle=content_item.get("subtitle", ""),
-                    content_text=content_item["description"],
-                    content_type=ContentTypeEnum(content_item["type"].lower()),
-                    status=ContentStatusEnum.REVIEW,  # Pending admin approval
-                    thumbnail_url=content_item["thumbnail"],
-                    media_url=content_item.get("url", ""),
-                    author_id=admin_user.id,
-                    category_id=category.id
-                )
-                db.add(content)
-                db.commit()
-                db.refresh(content)
-                logger.info(f"Created content: {content_item['title'][:50]}...")
-            else:
-                logger.info(f"Content already exists: {content_item['title'][:50]}...")
-        
+            category_name = content_item["category"]
+            category = category_objects.get(category_name)
+            if not category:
+                logger.warning(f"Category {category_name} not found, skipping: {content_item['title']}")
+                continue
+            content = Content(
+                title=content_item["title"],
+                subtitle=content_item.get("subtitle", ""),
+                content_text=content_item["description"],
+                content_type=ContentTypeEnum(content_item["type"].lower()),
+                status=ContentStatusEnum.REVIEW,  # Pending admin approval
+                thumbnail_url=content_item["thumbnail"],
+                media_url=content_item.get("url", ""),
+                author_id=admin_user.id,
+                category_id=category.id
+            )
+            db.add(content)
+        db.commit()
         logger.info(f"Database seeded successfully with {len(SEED_CONTENT)} items")
-        
+
     except Exception as e:
         logger.error(f"Database seeding failed: {e}")
+        db.rollback()
         raise e
