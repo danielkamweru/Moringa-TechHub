@@ -2,80 +2,38 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
-import time
 import logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Clean the DATABASE_URL of any whitespace/newlines
+raw_url = os.getenv("DATABASE_URL", "").strip().replace("\n", "").replace("\r", "")
 
-# Force override - ignore any external DATABASE_URL and use internal connection
-logger.info(f"Original DATABASE_URL: {DATABASE_URL}")
+if not raw_url:
+    raise ValueError("DATABASE_URL environment variable is not set")
 
-# Get the actual Render database connection from environment
-render_db_url = os.getenv("DATABASE_URL", "").strip()  # Strip whitespace and newlines
-if render_db_url and "postgresql://" in render_db_url:
-    # Use the DATABASE_URL as-is, but remove any SSL parameters to avoid conflicts
-    DATABASE_URL = render_db_url.replace("\n", "").replace(
-        "\r", ""
-    )  # Remove any newlines
-    # Remove any existing sslmode parameter completely to avoid conflicts
-    if "?sslmode=" in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
-    # Also remove any trailing ? if it exists after removing sslmode
-    if DATABASE_URL.endswith("?"):
-        DATABASE_URL = DATABASE_URL[:-1]
-    logger.info(f"Using configured database")
-else:
-    DATABASE_URL = "postgresql://moringa_user:@localhost:5432/moringa_techhub"
-    logger.info("Using fallback localhost database")
+# Strip any existing sslmode param then re-add it cleanly
+if "?sslmode=" in raw_url:
+    raw_url = raw_url.split("?sslmode=")[0]
+if raw_url.endswith("?"):
+    raw_url = raw_url[:-1]
 
-logger.info(f"Final DATABASE_URL: {DATABASE_URL}")
+DATABASE_URL = raw_url + "?sslmode=require"
 
-# Validate DATABASE_URL is properly configured
-if (
-    not DATABASE_URL
-    or DATABASE_URL == "postgresql://username:password@localhost:5432/moringa_techhub"
-):
-    raise ValueError("DATABASE_URL must be properly configured in Render dashboard")
+logger.info(f"Connecting to: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
 
-# SSL configuration will be handled in engine connect_args only
-
-logger.info(
-    f"Using PostgreSQL database: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}"
-)
-
-# Try to rebuild DATABASE_URL with proper SSL for Render
-original_db_url = os.getenv("DATABASE_URL", "").strip()
-if original_db_url:
-    # Remove any existing SSL parameters
-    db_url = original_db_url.replace("\n", "").replace("\r", "")
-    if "?sslmode=" in db_url:
-        db_url = db_url.split("?sslmode=")[0]
-    
-    # Add SSL parameter explicitly
-    DATABASE_URL = db_url + "?sslmode=require"
-    logger.info(f"Rebuilt DATABASE_URL with SSL: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'unknown'}")
-
-# Create engine with SSL configuration
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
     pool_recycle=300,
-    connect_args={
-        "connect_timeout": 30,
-        "sslmode": "require"
-    }
+    connect_args={"connect_timeout": 30}
 )
-logger.info("PostgreSQL engine created successfully")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
 
@@ -88,24 +46,11 @@ def get_db():
 
 
 def test_connection():
-    """Test database connection with psycopg2 directly"""
     try:
-        import psycopg2
-
-        # Test direct psycopg2 connection first
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.close()
-        conn.close()
-        logger.info("Direct psycopg2 connection successful")
-
-        # Now test SQLAlchemy connection
         with engine.connect() as connection:
             from sqlalchemy import text
-
             connection.execute(text("SELECT 1"))
-            logger.info("SQLAlchemy connection successful")
+            logger.info("Database connection successful")
             return True
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
